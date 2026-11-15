@@ -2,7 +2,9 @@
 
 原生 macOS 菜单栏图标管理应用。macOS 14+，支持 Apple Silicon 和 Intel，无第三方运行时依赖。
 
-当前交付：**1.0.0 / build 1 开发候选版**。下载见 [GitHub Releases](https://github.com/PanggNOTlovebean/MacUtilBar/releases)。PKG 安装到 `/Applications/MacUtilBar.app`。这是 ad-hoc 签名、未公证的预发布包，macOS 可能阻止直接打开；不属于 Developer ID 正式发行版。
+当前交付：**1.0.1 / build 2 开发候选版**。下载见 [GitHub Releases](https://github.com/PanggNOTlovebean/MacUtilBar/releases)。PKG 安装到 `/Applications/MacUtilBar.app`。这是 ad-hoc 签名、未公证的预发布包，macOS 可能阻止直接打开；不属于 Developer ID 正式发行版。
+
+1.0.1 加强窗口身份验证、未确认状态提示和诊断证据，修正系统指示器保持可见时错误回滚折叠的问题。见 [最新验证记录](docs/validation/1.0.1-validation.md)。
 
 已实现第一期：
 
@@ -34,7 +36,7 @@ codesign --verify --deep --strict build/candidate/MacUtilBar.app
 
 无需远程 SwiftPM 依赖。构建脚本产生通用 App、PKG 和 SHA256SUMS。`MACUTILBAR_SIGN_IDENTITY` 可指定应用签名身份；Installer 签名和公证尚未配置。
 
-实测证据及未验证项目：[1.0.0 验证记录](docs/validation/1.0.0-validation.md)。**当前环境的 .app 启动路径读不到有效状态项坐标（独立二进制折叠实测通过），应用会暂停折叠并提示。此问题、VM 交互、多显示器、完整触发器矩阵及安装/登录项流程仍待验收，不应把候选版视为可用性已确认的正式版本。**
+实测证据及未验证项目：[1.0.1 验证记录](docs/validation/1.0.1-validation.md)，[首版记录](docs/validation/1.0.0-validation.md)。**当前环境的 .app 启动路径读不到有效状态项坐标（独立二进制折叠实测通过），应用会暂停折叠并提示。此问题、VM 交互、多显示器、完整触发器矩阵及安装/登录项流程仍待验收，不应把候选版视为可用性已确认的正式版本。**
 
 - [技术方案](docs/technical-design.md)
 - [UI 设计](docs/ui-spec.md)

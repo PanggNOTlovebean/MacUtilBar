@@ -12,14 +12,14 @@ extension AppModel {
         probe.autosaveName = "MacUtilBar.Probe"; probe.button?.title = "◇"
         var samples: [[String: Any]] = []
         func sample(_ label: String) {
-            func rect(_ item: NSStatusItem) -> [String: Double] {
-                let r = self.frames.frame(item) ?? .zero
-                return ["x":r.minX,"y":r.minY,"width":r.width,"height":r.height]
+            func rect(_ item: NSStatusItem) -> [String: Any] {
+                guard let r = self.frames.frame(item) else { return ["available":false] }
+                return ["available":true,"x":r.minX,"y":r.minY,"width":r.width,"height":r.height]
             }
             let windows = barWindows().map { ["id":Double($0.id),"x":$0.frame.minX,"y":$0.frame.minY,"width":$0.frame.width,"height":$0.frame.height] }
             samples.append(["state":label,"main":rect(self.main),"spacer":rect(self.spacer),"permanent":rect(self.permanent),"probe":rect(probe),"windows":windows,"orderBroken":self.orderBroken,"hidingUnavailable":self.hidingUnavailable])
         }
-        frames.identify([probe]) {}
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.frames.identify([probe]) {} }
         setState(.all)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             sample("all-before"); self.setState(.collapsed)

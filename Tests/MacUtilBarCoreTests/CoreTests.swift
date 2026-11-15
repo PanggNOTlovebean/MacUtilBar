@@ -52,3 +52,35 @@ final class CoreTests: XCTestCase {
         XCTAssertFalse(timer.tick(delay: 0, paused: false, expanded: true))
     }
 }
+
+final class CalibrationTests: XCTestCase {
+    private func window(_ id: UInt32, _ width: Double) -> BarWindow { BarWindow(id: id, frame: CGRect(x: 100, y: 0, width: width, height: 33)) }
+    func testRequiresRestoredWidthAndStableIdentity() {
+        let before = [window(1, 42)], expanded = [window(1, 53)]
+        XCTAssertEqual(StatusWindowCalibration.identify(before: before, expanded: expanded, restored: before, delta: 11), 1)
+        XCTAssertNil(StatusWindowCalibration.identify(before: before, expanded: expanded, restored: expanded, delta: 11))
+        XCTAssertNil(StatusWindowCalibration.identify(before: before, expanded: expanded, restored: [window(2, 42)], delta: 11))
+        XCTAssertNil(StatusWindowCalibration.identify(before: before, expanded: expanded, restored: [], delta: 11))
+    }
+    func testAmbiguousChangesAreRejected() {
+        let before = [window(1, 42), window(2, 22)]
+        let expanded = [window(1, 53), window(2, 33)]
+        XCTAssertNil(StatusWindowCalibration.identify(before: before, expanded: expanded, restored: before, delta: 11))
+    }
+}
+
+final class PartialHidingTests: XCTestCase {
+    func testPartialHidingReportsRemainderWithoutClaimingCompleteHiding() {
+        let screen = CGRect(x: 0, y: 0, width: 1000, height: 800)
+        let main = CGRect(x: 900, y: 0, width: 26, height: 24)
+        let icon = BarWindow(id: 1, frame: CGRect(x: 500, y: 0, width: 30, height: 24))
+        let indicator = BarWindow(id: 2, frame: CGRect(x: 400, y: 0, width: 48, height: 24))
+        let relocated = BarWindow(id: 2, frame: CGRect(x: 852, y: 0, width: 48, height: 24))
+        var check = HidingSelfTest()
+        XCTAssertEqual(check.check(before: [icon, indicator], after: [relocated], screens: [screen], main: main), true)
+        XCTAssertEqual(check.visibleRemainder, 1)
+        XCTAssertEqual(check.failures, 0)
+        XCTAssertEqual(check.check(before: [icon], after: [icon], screens: [screen], main: main), true)
+        XCTAssertEqual(check.check(before: [icon], after: [icon], screens: [screen], main: main), false)
+    }
+}

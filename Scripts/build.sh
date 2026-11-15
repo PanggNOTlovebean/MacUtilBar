@@ -2,6 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 out="${1:-build/candidate}"
+version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Resources/Info.plist)"
 mkdir -p "$out"
 swift build -c release --arch arm64 --arch x86_64
 bin="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"
@@ -18,5 +19,5 @@ ditto "$app" "$out/payload/Applications/MacUtilBar.app"
 xattr -cr "$out/payload"
 pkgbuild --analyze --root "$out/payload" "$out/components.plist"
 /usr/libexec/PlistBuddy -c 'Set :0:BundleIsRelocatable false' "$out/components.plist"
-pkgbuild --root "$out/payload" --component-plist "$out/components.plist" --install-location / --identifier local.macutilbar.app --version 1.0.0 "$out/MacUtilBar-1.0.0.pkg"
-(cd "$out" && shasum -a 256 MacUtilBar-1.0.0.pkg > SHA256SUMS.txt)
+pkgbuild --root "$out/payload" --component-plist "$out/components.plist" --install-location / --identifier local.macutilbar.app --version "$version" "$out/MacUtilBar-${version}.pkg"
+(cd "$out" && shasum -a 256 MacUtilBar-${version}.pkg > SHA256SUMS.txt)

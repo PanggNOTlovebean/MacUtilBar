@@ -31,8 +31,9 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     if !model.error.isEmpty { Text(t("配置或操作有误，保留上次有效设置：", "Previous settings preserved: ") + model.error).font(.caption).foregroundStyle(.orange).textSelection(.enabled) }
                     if model.geometryUnavailable {
-                        Text(t("菜单栏当前不可用，已暂停收起。请检查系统菜单栏设置，或退出全屏后重试。", "The menu bar is unavailable. Hiding is paused. Check Menu Bar settings or retry outside full screen.")).font(.caption).foregroundStyle(.orange)
-                        Button(t("重新检查", "Retry")) { model.frames.identify([model.main, model.spacer, model.permanent]) { model.refresh() } }
+                        Text(t("尚未确认菜单栏图标位置，已暂停收起。请在系统设置 → 菜单栏检查是否允许 MacUtil Bar 显示，再从访达打开应用。", "The icon position could not be verified. Hiding is paused. Check that MacUtil Bar is allowed in System Settings → Menu Bar, then open the app from Finder.")).font(.caption).foregroundStyle(.orange)
+                        Button(t("打开系统菜单栏设置", "Open Menu Bar Settings")) { NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.ControlCenter-Settings.extension")!) }
+                        Button(t("重新检查", "Retry")) { model.retryGeometry() }
                     }
                     if tab == 0 { general } else { layout }
                 }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
@@ -77,15 +78,16 @@ struct SettingsView: View {
             title("当前分区", "Current sections")
             HStack(spacing: 0) {
                 ForEach(0..<3) { i in
-                    VStack { Text([t("永久隐藏 ┆", "Always hidden ┆"),t("隐藏 ◉", "Hidden ◉"),t("常显 ｜ 系统", "Visible | System")][i]).frame(maxWidth: .infinity).frame(height: 36).background(Color.primary.opacity(Double(3-i) * 0.035)); Text("\(model.counts[i])").font(.caption).foregroundStyle(.secondary) }
+                    VStack { Text([t("永久隐藏 ┆", "Always hidden ┆"),t("隐藏 ◉", "Hidden ◉"),t("常显 ｜ 系统", "Visible | System")][i]).frame(maxWidth: .infinity).frame(height: 36).background(Color.primary.opacity(Double(3-i) * 0.035)); Text(model.hasCountSample && !model.geometryUnavailable ? "\(model.counts[i])" : "—").font(.caption).foregroundStyle(.secondary) }
                 }
             }
             Text(t("数量为全部展开时采样的窗口数，包含系统图标。", "Counts are window samples from Show All, including system icons.")).font(.caption).foregroundStyle(.secondary)
             HStack { Button(t("显示全部", "Show All")) { model.setState(.all) }; Button(t("收起", "Collapse")) { model.setState(.collapsed) } }
             title("移动图标", "Move icons")
             Text(t("按住 ⌘ 把图标拖到 ◉ 左边、紧邻的空白分隔符左侧即可收起。\n拖到 ┆ 左边则永久隐藏，⌥ 点击 ◉ 时才显示。", "⌘-drag icons left of ◉ and its adjacent spacer to hide them.\nDrag left of ┆ to keep them hidden until Option-click." )).font(.system(size: 13)).lineSpacing(6)
-            if model.orderBroken || model.hidingUnavailable || model.notchCount > 0 {
+            if model.orderBroken || model.hidingUnavailable || model.notchCount > 0 || model.visibleRemainder > 0 {
                 title("状态", "Status")
+                if model.visibleRemainder > 0 { Text(t("收起后仍有 \(model.visibleRemainder) 个窗口可见；系统指示器可能保持显示。", "\(model.visibleRemainder) windows remain visible after collapse; system indicators may stay visible.")).font(.caption).foregroundStyle(.secondary) }
                 if model.orderBroken { HStack { Text(t("分隔符顺序异常", "Dividers are out of order")); Spacer(); Button(t("一键修复", "Fix")) { model.fixOrder() } } }
                 if model.hidingUnavailable { Text(t("隐藏自检失败，已恢复展开。当前系统或分隔符布局无法安全隐藏图标。", "Hiding self-test failed. Icons were restored; check the divider layout or system support.")).foregroundStyle(.red); Button(t("打开系统菜单栏设置", "Open Menu Bar Settings")) { NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.ControlCenter-Settings.extension")!) } }
                 if model.notchCount > 0 { HStack { Text(t("有 \(model.notchCount) 个窗口可能被刘海遮挡", "\(model.notchCount) windows may be obscured by the notch")); Spacer(); Button(t("展开查看", "Reveal")) { model.setState(.all); let token = model.generation; DispatchQueue.main.asyncAfter(deadline: .now() + 5) { if model.generation == token { model.setState(.collapsed) } } } } }

@@ -11,8 +11,10 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate {
     @Published var orderBroken = false
     @Published var geometryUnavailable = false
     @Published var hidingUnavailable = false
+    @Published var visibleRemainder = 0
     @Published var notchCount = 0
     @Published var counts = [0, 0, 0]
+    @Published var hasCountSample = false
     @Published var loginStatus = ""
     let file: ConfigurationFile
     var main: NSStatusItem!, spacer: NSStatusItem!, permanent: NSStatusItem!
@@ -72,13 +74,22 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate {
         }
     }
     func createItems() {
-        permanent = NSStatusBar.system.statusItem(withLength: 22); permanent.autosaveName = "MacUtilBar.AlwaysHidden"
-        spacer = NSStatusBar.system.statusItem(withLength: 8); spacer.autosaveName = "MacUtilBar.HiddenSpacer"
-        main = NSStatusBar.system.statusItem(withLength: 26); main.autosaveName = "MacUtilBar.Main"
+        permanent = NSStatusBar.system.statusItem(withLength: 22)
+        spacer = NSStatusBar.system.statusItem(withLength: 8)
+        main = NSStatusBar.system.statusItem(withLength: 26)
+        // Let AppKit attach the items before restoring their saved positions.
+        for (name, item) in [("AlwaysHidden", permanent!), ("HiddenSpacer", spacer!), ("Main", main!)] {
+            DispatchQueue.main.async { item.autosaveName = "MacUtilBar." + name }
+        }
         main.button?.target = self; main.button?.action = #selector(click)
         main.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         main.button?.toolTip = "MacUtil Bar — ⌥ " + t("显示全部", "Show All")
         updateIcon()
+    }
+    func retryGeometry() {
+        guard ready else { return }
+        ready = false
+        frames.identify([main, spacer, permanent]) { self.ready = true; self.refresh() }
     }
     func fixOrder() {
         setState(.all)
@@ -93,7 +104,7 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate {
     }
     func toggle() { setState(state == .collapsed ? .revealed : .collapsed) }
     func setState(_ next: RevealState) {
-        guard main != nil else { return }
+        guard main != nil, ready else { return }
         // During full-screen menu-bar suppression AppKit exposes placeholder frames.
         // Do not infer order or mutate hiding geometry until the bar is visible again.
         if next != .all {
@@ -102,6 +113,7 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate {
         guard (!hidingUnavailable && !orderBroken) || next == .all else { return }
         if state == .all || state == .revealed { captureTargets() }
         let previous = state
+        if next != .collapsed { visibleRemainder = 0 }
         state = next; generation += 1; let token = generation
         collapse = AutoCollapse()
         let width = Geometry.collapseLength(widths: NSScreen.screens.map { $0.frame.width })
@@ -113,7 +125,13 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate {
             for delay in [0.5, 1.2] {
                 DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                     guard let self, self.generation == token, let frame = self.frames.frame(self.main) else { return }
-                    if self.selfTest.check(before: before, after: barWindows(), screens: NSScreen.screens.map { quartzRect($0.frame) }, main: quartzRect(frame)) == false {
+                    let after = barWindows()
+                    if CommandLine.arguments.contains("--diagnose") {
+                        print("hiding check", "main", frame, "targets", before.map { "\($0.id):\($0.frame)" }, "after", after.filter { w in before.contains { $0.id == w.id } }.map { "\($0.id):\($0.frame)" })
+                    }
+                    let available = self.selfTest.check(before: before, after: after, screens: NSScreen.screens.map { quartzRect($0.frame) }, main: quartzRect(frame))
+                    self.visibleRemainder = self.selfTest.visibleRemainder
+                    if available == false {
                         self.hidingUnavailable = true; self.setState(.all)
                     }
                 }
@@ -127,7 +145,7 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate {
         expandedWindows = barWindows(onScreen: true).filter { !own.contains($0.id) && $0.frame.maxX <= mainFrame.minX && screenRect.intersects($0.frame) }
     }
     func refresh() {
-        guard let mf = frames.frame(main), let pf = frames.frame(permanent), let sf = frames.frame(spacer) else { return }
+        guard let mf = frames.frame(main), let pf = frames.frame(permanent), let sf = frames.frame(spacer) else { geometryUnavailable = ready; return }
         guard NSScreen.screens.contains(where: { $0.frame.contains(mf) }) else { geometryUnavailable = ready; return }
         geometryUnavailable = false
         orderBroken = !Geometry.ordered(main: mf, spacer: sf, permanent: pf)
@@ -136,6 +154,7 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate {
             // Counts are sampled only while all sections are expanded.
             let screen = mainScreen ?? NSScreen.main!
             let sampled = barWindows(onScreen: true).filter { !own.contains($0.id) && quartzRect(screen.frame).intersects($0.frame) }
+            hasCountSample = !sampled.isEmpty
             counts = [Section.alwaysHidden, .hidden, .visible].map { section in sampled.filter { Geometry.section(x: $0.frame.midX, main: mf.minX, permanent: pf.minX) == section }.count }
         }
         if state != .collapsed, let screen = mainScreen, let right = screen.auxiliaryTopRightArea, let left = screen.auxiliaryTopLeftArea {

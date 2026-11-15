@@ -1,0 +1,65 @@
+[0/1] Planning build
+Building for debugging...
+[0/7] Write sources
+[3/7] Write swift-version--58304C5D6DBC2206.txt
+[5/9] Emitting module MacUtilBarCore
+[6/9] Compiling MacUtilBarCore Models.swift
+[7/16] Compiling MacUtilBarCoreTests CoreTests.swift
+[8/16] Emitting module MacUtilBarCoreTests
+[9/16] Compiling MacUtilBar Main.swift
+[10/16] Compiling MacUtilBar Diagnostics.swift
+[11/16] Emitting module MacUtilBar
+[12/16] Compiling MacUtilBar SettingsView.swift
+[13/16] Compiling MacUtilBar AppModel.swift
+[13/18] Write Objects.LinkFileList
+[14/18] Linking MacUtilBar
+[15/18] Applying MacUtilBar
+[16/18] Write Objects.LinkFileList
+[17/18] Linking MacUtilBarPackageTests
+Build complete! (3.47s)
+Test Suite 'All tests' started at 2026-11-15 22:44:48.369.
+Test Suite 'MacUtilBarPackageTests.xctest' started at 2026-11-15 22:44:48.372.
+Test Suite 'AppTests' started at 2026-11-15 22:44:48.372.
+Test Case '-[MacUtilBarTests.AppTests testRoutes]' started.
+Test Case '-[MacUtilBarTests.AppTests testRoutes]' passed (0.003 seconds).
+Test Case '-[MacUtilBarTests.AppTests testShortcuts]' started.
+Test Case '-[MacUtilBarTests.AppTests testShortcuts]' passed (0.001 seconds).
+Test Case '-[MacUtilBarTests.AppTests testTemplateIcon]' started.
+Test Case '-[MacUtilBarTests.AppTests testTemplateIcon]' passed (0.000 seconds).
+Test Case '-[MacUtilBarTests.AppTests testVersionAndPrivacyManifest]' started.
+Test Case '-[MacUtilBarTests.AppTests testVersionAndPrivacyManifest]' passed (0.000 seconds).
+Test Suite 'AppTests' passed at 2026-11-15 22:44:48.377.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'CalibrationTests' started at 2026-11-15 22:44:48.377.
+Test Case '-[MacUtilBarCoreTests.CalibrationTests testAmbiguousChangesAreRejected]' started.
+Test Case '-[MacUtilBarCoreTests.CalibrationTests testAmbiguousChangesAreRejected]' passed (0.000 seconds).
+Test Case '-[MacUtilBarCoreTests.CalibrationTests testRequiresRestoredWidthAndStableIdentity]' started.
+Test Case '-[MacUtilBarCoreTests.CalibrationTests testRequiresRestoredWidthAndStableIdentity]' passed (0.000 seconds).
+Test Suite 'CalibrationTests' passed at 2026-11-15 22:44:48.377.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'CoreTests' started at 2026-11-15 22:44:48.377.
+Test Case '-[MacUtilBarCoreTests.CoreTests testAutoCollapsePausesAndRestarts]' started.
+Test Case '-[MacUtilBarCoreTests.CoreTests testAutoCollapsePausesAndRestarts]' passed (0.000 seconds).
+Test Case '-[MacUtilBarCoreTests.CoreTests testConfigurationRoundTripAndValidation]' started.
+Test Case '-[MacUtilBarCoreTests.CoreTests testConfigurationRoundTripAndValidation]' passed (0.001 seconds).
+Test Case '-[MacUtilBarCoreTests.CoreTests testFileConflictPreservesExternalData]' started.
+Test Case '-[MacUtilBarCoreTests.CoreTests testFileConflictPreservesExternalData]' passed (0.002 seconds).
+Test Case '-[MacUtilBarCoreTests.CoreTests testSectionsAndScreens]' started.
+Test Case '-[MacUtilBarCoreTests.CoreTests testSectionsAndScreens]' passed (0.000 seconds).
+Test Case '-[MacUtilBarCoreTests.CoreTests testSelfTestRequiresActualFramesAndTwoFailures]' started.
+Test Case '-[MacUtilBarCoreTests.CoreTests testSelfTestRequiresActualFramesAndTwoFailures]' passed (0.000 seconds).
+Test Suite 'CoreTests' passed at 2026-11-15 22:44:48.380.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'PartialHidingTests' started at 2026-11-15 22:44:48.380.
+Test Case '-[MacUtilBarCoreTests.PartialHidingTests testPartialHidingReportsRemainderWithoutClaimingCompleteHiding]' started.
+Test Case '-[MacUtilBarCoreTests.PartialHidingTests testPartialHidingReportsRemainderWithoutClaimingCompleteHiding]' passed (0.000 seconds).
+Test Suite 'PartialHidingTests' passed at 2026-11-15 22:44:48.381.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'MacUtilBarPackageTests.xctest' passed at 2026-11-15 22:44:48.381.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.007 (0.008) seconds
+Test Suite 'All tests' passed at 2026-11-15 22:44:48.381.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.007 (0.011) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
