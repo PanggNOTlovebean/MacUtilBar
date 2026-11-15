@@ -16,7 +16,7 @@
 
 ## 2. 实测基线（2026-11-15，宿主 macOS 26.6.2，带刘海的 1470×956 屏）
 
-用一个探测程序（`CGWindowListCopyWindowInfo`，`optionOnScreenOnly`，筛选第 25 层，也就是 `kCGStatusWindowLevel`）读取窗口列表，结果如下：
+用探测程序 [`Scripts/research/menubar-probe.swift`](../Scripts/research/menubar-probe.swift)（`CGWindowListCopyWindowInfo`，`optionOnScreenOnly`，筛选第 25 层，也就是 `kCGStatusWindowLevel`）读取窗口列表，结果如下：
 
 | 观察 | 结论 |
 |---|---|
