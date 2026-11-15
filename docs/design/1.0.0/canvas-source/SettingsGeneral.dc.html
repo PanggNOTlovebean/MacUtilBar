@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<title>设置 · 基本设置</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0058B8}a:hover{color:#003F85}
+</style>
+</helmet>
+<div style="width: 680px; height: 760px; box-sizing: border-box; background: #FFFFFF; font-family: -apple-system, 'SF Pro Text', 'PingFang SC', Inter, sans-serif; color: #1D1D1F; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,0.14), 0 16px 40px rgba(0,0,0,0.10)">
+<div style="height: 30px; display: flex; align-items: center; padding: 0 14px; background: #F3F3F5; border-bottom: 1px solid rgba(0,0,0,0.08); position: relative">
+<span style="display: flex; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 6px; background: #FF5F57"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #FEBC2E"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #28C840"></span></span>
+<span style="position: absolute; left: 0; right: 0; text-align: center; font-size: 13px; color: #3A3A3C">MacUtil Bar</span>
+</div>
+<div style="display: flex; align-items: center; gap: 16px; padding: 18px 28px 0">
+<div style="width: 64px; height: 64px; border-radius: 15px; background: linear-gradient(180deg, #A27BFF, #6A3FD6); display: flex; align-items: center; justify-content: center"><svg width="44" height="44" viewBox="0 0 64 64" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="17" width="54" height="30" rx="9" style="stroke-width: 5"></rect><path d="M24 25 L17 32 L24 39" style="stroke-width: 5"></path><rect x="33" y="26" width="8" height="12" rx="3" fill="#FFFFFF" stroke="none"></rect><rect x="45" y="26" width="8" height="12" rx="3" fill="#FFFFFF" stroke="none"></rect></svg></div>
+<div><h1 style="margin: 0; font-size: 24px; font-weight: 700">MacUtil Bar</h1><p style="margin: 4px 0 0; font-size: 13px; color: #5E5E63">菜单栏，只留需要的。</p></div>
+</div>
+<div style="display: flex; gap: 32px; padding: 16px 28px 0; border-bottom: 1px solid rgba(0,0,0,0.10)">
+<button style="all: unset; padding: 4px 4px 9px; font-size: 15px; font-weight: 600; color: #0A64D8; border-bottom: 2px solid #0A64D8">基本设置</button>
+<button style="all: unset; padding: 4px 4px 9px; font-size: 15px; font-weight: 600; color: #48484A; border-bottom: 2px solid transparent">布局</button>
+</div>
+<div style="flex: 1; padding: 6px 28px 0; display: flex; flex-direction: column; overflow: hidden">
+
+<h2 style="margin: 14px 0 2px; font-size: 15px; font-weight: 600">常规</h2>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.08)"><label style="font-size: 13px">快捷键</label><span style="width: 160px; height: 26px; border-radius: 6px; background: #F2F2F4; box-shadow: 0 0 0 1px rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; font-size: 13px; letter-spacing: 4px">⌃ ⌥ B</span></div>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.08)"><label style="font-size: 13px">界面语言</label><span style="width: 160px; height: 26px; box-sizing: border-box; border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,0.14); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 13px"><span>简体中文</span><span style="color: #0A64D8">⌄</span></span></div>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.08)"><label style="font-size: 13px">外观</label>
+<span style="display: flex; border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,0.14); overflow: hidden; font-size: 13px">
+<span style="padding: 4px 14px; background: #E5EFFC; color: #0A64D8">跟随系统</span><span style="padding: 4px 14px; border-left: 1px solid rgba(0,0,0,0.12)">浅色</span><span style="padding: 4px 14px; border-left: 1px solid rgba(0,0,0,0.12)">深色</span>
+</span></div>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between"><label style="font-size: 13px">开机启动</label><span style="width: 32px; height: 18px; border-radius: 9px; background: #0A64D8; position: relative"><span style="position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 7px; background: #FFFFFF"></span></span></div>
+
+<h2 style="margin: 16px 0 2px; font-size: 15px; font-weight: 600">展开与收起</h2>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.08)"><label style="font-size: 13px">悬停在菜单栏空白处展开</label><span style="width: 32px; height: 18px; border-radius: 9px; background: #0A64D8; position: relative"><span style="position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 7px; background: #FFFFFF"></span></span></div>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.08)"><label style="font-size: 13px">悬停延迟</label><span style="display: flex; align-items: center; gap: 10px"><span style="width: 76px; height: 26px; box-sizing: border-box; border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,0.14); display: flex; align-items: center; justify-content: space-between; padding: 0 6px 0 10px; font-size: 13px"><span>0.3</span><span style="font-size: 9px; color: #6E6E73; line-height: 9px; text-align: center">⌃<br>⌄</span></span><span style="font-size: 13px; color: #5E5E63; width: 18px">秒</span></span></div>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.08)"><label style="font-size: 13px">在菜单栏上滚动展开</label><span style="width: 32px; height: 18px; border-radius: 9px; background: #D1D1D6; position: relative"><span style="position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; border-radius: 7px; background: #FFFFFF"></span></span></div>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.08)"><label style="font-size: 13px">自动收起</label><span style="display: flex; align-items: center; gap: 10px"><span style="width: 76px; height: 26px; box-sizing: border-box; border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,0.14); display: flex; align-items: center; justify-content: space-between; padding: 0 6px 0 10px; font-size: 13px"><span>10</span><span style="font-size: 9px; color: #6E6E73; line-height: 9px; text-align: center">⌃<br>⌄</span></span><span style="font-size: 13px; color: #5E5E63; width: 18px">秒</span></span></div>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between"><label style="font-size: 13px">切换应用时收起</label><span style="width: 32px; height: 18px; border-radius: 9px; background: #D1D1D6; position: relative"><span style="position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; border-radius: 7px; background: #FFFFFF"></span></span></div>
+<p style="margin: 4px 0 0; font-size: 12px; color: #5E5E63">左键点击主图标始终可以展开或收起；⌥ 点击显示全部。</p>
+
+<h2 style="margin: 16px 0 2px; font-size: 15px; font-weight: 600">外观</h2>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.08)"><label style="font-size: 13px">分隔符样式</label>
+<span style="display: flex; border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,0.14); overflow: hidden; font-size: 13px">
+<span style="padding: 4px 14px; background: #E5EFFC; color: #0A64D8">‹‹ 箭头</span><span style="padding: 4px 14px; border-left: 1px solid rgba(0,0,0,0.12)">│ 竖线</span><span style="padding: 4px 14px; border-left: 1px solid rgba(0,0,0,0.12)">• 圆点</span>
+</span></div>
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between"><label style="font-size: 13px">刘海遮挡提示</label><span style="width: 32px; height: 18px; border-radius: 9px; background: #0A64D8; position: relative"><span style="position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 7px; background: #FFFFFF"></span></span></div>
+</div>
+<div style="padding: 10px 28px 12px; border-top: 1px solid rgba(0,0,0,0.08); font-size: 11px; color: #5E5E63">配置文件：<a href="#">~/.config/macutilbar/config.toml</a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":680,"height":760}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

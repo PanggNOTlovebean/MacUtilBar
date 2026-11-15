@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<title>设置 · 布局（无权限）</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0058B8}a:hover{color:#003F85}
+</style>
+</helmet>
+<div style="width: 680px; height: 760px; box-sizing: border-box; background: #FFFFFF; font-family: -apple-system, 'SF Pro Text', 'PingFang SC', Inter, sans-serif; color: #1D1D1F; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,0.14), 0 16px 40px rgba(0,0,0,0.10)">
+<div style="height: 30px; display: flex; align-items: center; padding: 0 14px; background: #F3F3F5; border-bottom: 1px solid rgba(0,0,0,0.08); position: relative">
+<span style="display: flex; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 6px; background: #FF5F57"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #FEBC2E"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #28C840"></span></span>
+<span style="position: absolute; left: 0; right: 0; text-align: center; font-size: 13px; color: #3A3A3C">MacUtil Bar</span>
+</div>
+<div style="display: flex; align-items: center; gap: 16px; padding: 18px 28px 0">
+<div style="width: 64px; height: 64px; border-radius: 15px; background: linear-gradient(180deg, #A27BFF, #6A3FD6); display: flex; align-items: center; justify-content: center"><svg width="44" height="44" viewBox="0 0 64 64" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="17" width="54" height="30" rx="9" style="stroke-width: 5"></rect><path d="M24 25 L17 32 L24 39" style="stroke-width: 5"></path><rect x="33" y="26" width="8" height="12" rx="3" fill="#FFFFFF" stroke="none"></rect><rect x="45" y="26" width="8" height="12" rx="3" fill="#FFFFFF" stroke="none"></rect></svg></div>
+<div><h1 style="margin: 0; font-size: 24px; font-weight: 700">MacUtil Bar</h1><p style="margin: 4px 0 0; font-size: 13px; color: #5E5E63">菜单栏，只留需要的。</p></div>
+</div>
+<div style="display: flex; gap: 32px; padding: 16px 28px 0; border-bottom: 1px solid rgba(0,0,0,0.10)"><button style="all: unset; padding: 4px 4px 9px; font-size: 15px; font-weight: 600; color: #48484A; border-bottom: 2px solid transparent">基本设置</button><button style="all: unset; padding: 4px 4px 9px; font-size: 15px; font-weight: 600; color: #0A64D8; border-bottom: 2px solid #0A64D8">布局</button></div><div style="flex: 1; padding: 6px 28px 0; display: flex; flex-direction: column; overflow: hidden">
+<h2 style="margin: 14px 0 2px; font-size: 15px; font-weight: 600">当前分区</h2>
+<div style="display: flex; height: 36px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,0.10); font-size: 12px; margin-top: 8px">
+<div style="flex: 2; background: #D8D8DD; display: flex; align-items: center; justify-content: center; color: #3A3A3C">永久隐藏</div>
+<div style="width: 22px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #6E6E73">┆</div>
+<div style="flex: 4; background: #E8E8EC; display: flex; align-items: center; justify-content: center; color: #3A3A3C">隐藏</div>
+<div style="width: 30px; background: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 64 64" fill="none" stroke="#1D1D1F" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="17" width="54" height="30" rx="9" style="stroke-width: 6"></rect><path d="M24 25 L17 32 L24 39" style="stroke-width: 6"></path><rect x="33" y="26" width="8" height="12" rx="3" fill="#1D1D1F" stroke="none"></rect><rect x="45" y="26" width="8" height="12" rx="3" fill="#1D1D1F" stroke="none"></rect></svg></div>
+<div style="flex: 3; background: #F6F6F8; display: flex; align-items: center; justify-content: center; color: #3A3A3C">常显</div>
+<div style="width: 1px; background: rgba(0,0,0,0.14)"></div>
+<div style="flex: 3; background: #F6F6F8; display: flex; align-items: center; justify-content: center; color: #6E6E73">系统</div>
+</div>
+<div style="display: flex; font-size: 12px; color: #5E5E63; margin-top: 6px">
+<span style="flex: 2; text-align: center">2 个</span><span style="width: 22px"></span><span style="flex: 4; text-align: center">4 个</span><span style="width: 30px"></span><span style="flex: 3; text-align: center">3 个</span><span style="width: 1px"></span><span style="flex: 3; text-align: center">5 个</span>
+</div>
+<h2 style="margin: 16px 0 2px; font-size: 15px; font-weight: 600">移动图标</h2>
+<p style="margin: 6px 0 0; font-size: 13px; line-height: 22px">按住 ⌘ 把图标拖到 <svg width="14" height="14" viewBox="0 0 64 64" fill="none" stroke="#1D1D1F" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="17" width="54" height="30" rx="9" style="stroke-width: 6"></rect><path d="M24 25 L17 32 L24 39" style="stroke-width: 6"></path><rect x="33" y="26" width="8" height="12" rx="3" fill="#1D1D1F" stroke="none"></rect><rect x="45" y="26" width="8" height="12" rx="3" fill="#1D1D1F" stroke="none"></rect></svg> 左边即可收起。</p>
+<p style="margin: 0; font-size: 13px; line-height: 22px">拖到 ┆ 左边则永久隐藏，⌥ 点击 <svg width="14" height="14" viewBox="0 0 64 64" fill="none" stroke="#1D1D1F" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="17" width="54" height="30" rx="9" style="stroke-width: 6"></rect><path d="M24 25 L17 32 L24 39" style="stroke-width: 6"></path><rect x="33" y="26" width="8" height="12" rx="3" fill="#1D1D1F" stroke="none"></rect><rect x="45" y="26" width="8" height="12" rx="3" fill="#1D1D1F" stroke="none"></rect></svg> 时才显示。</p>
+<h2 style="margin: 16px 0 2px; font-size: 15px; font-weight: 600">状态</h2>
+<div style="min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid rgba(0,0,0,0.08)"><span style="font-size: 13px">有 2 个图标被刘海挡住</span><button style="all: unset; font-size: 13px; padding: 4px 14px; border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,0.16)">展开查看</button></div>
+<div style="min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 16px"><span style="font-size: 13px">分隔符顺序异常：┆ 跑到了主图标右边</span><button style="all: unset; font-size: 13px; padding: 4px 14px; border-radius: 6px; background: #0A64D8; color: #FFFFFF">一键修复</button></div>
+<h2 style="margin: 16px 0 2px; font-size: 15px; font-weight: 600">可视化排序</h2>
+<div style="min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 16px"><span style="font-size: 13px">识别每个图标并直接在这里调整，需要辅助功能权限。</span><button style="all: unset; font-size: 13px; padding: 4px 14px; border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,0.10); color: #6E6E73" disabled>即将推出</button></div>
+</div>
+<div style="padding: 10px 28px 12px; border-top: 1px solid rgba(0,0,0,0.08); font-size: 11px; color: #5E5E63">配置文件：<a href="#">~/.config/macutilbar/config.toml</a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":680,"height":760}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
