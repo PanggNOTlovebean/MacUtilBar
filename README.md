@@ -36,7 +36,7 @@ codesign --verify --deep --strict build/candidate/MacUtilBar.app
 
 无需远程 SwiftPM 依赖。构建脚本产生通用 App、PKG 和 SHA256SUMS。`MACUTILBAR_SIGN_IDENTITY` 可指定应用签名身份；Installer 签名和公证尚未配置。
 
-实测证据及未验证项目：[1.0.1 验证记录](docs/validation/1.0.1-validation.md)，[首版记录](docs/validation/1.0.0-validation.md)。**当前环境的 .app 启动路径读不到有效状态项坐标（独立二进制折叠实测通过），应用会暂停折叠并提示。此问题、VM 交互、多显示器、完整触发器矩阵及安装/登录项流程仍待验收，不应把候选版视为可用性已确认的正式版本。**
+实测证据及未验证项目：[1.0.1 验证记录](docs/validation/1.0.1-validation.md)，[首版记录](docs/validation/1.0.0-validation.md)。**当前环境的 .app 启动路径读不到有效状态项坐标（独立二进制折叠实测通过），应用会暂停折叠并提示。2026-11-18 经用户授权将 MacUtilBar 的系统菜单栏显示开关关闭后恢复，问题仍复现。此问题、VM 交互、多显示器、完整触发器矩阵及安装/登录项流程仍待验收，不应把候选版视为可用性已确认的正式版本。**
 
 - [技术方案](docs/technical-design.md)
 - [UI 设计](docs/ui-spec.md)
