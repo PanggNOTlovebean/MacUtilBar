@@ -3,8 +3,8 @@ import CoreGraphics
 
 
 public enum Version {
-    public static let current = "1.0.1"
-    public static let build = "2"
+    public static let current = "1.0.2"
+    public static let build = "3"
 }
 public enum RevealState: String, Codable { case collapsed, revealed, all }
 public enum Route: String, CaseIterable {

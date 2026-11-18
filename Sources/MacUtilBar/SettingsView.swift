@@ -52,6 +52,7 @@ struct SettingsView: View {
     func toggle(_ zh: String, _ en: String, _ path: WritableKeyPath<Configuration, Bool>) -> some View { row(zh, en) { Toggle(t(zh, en), isOn: binding(path)).labelsHidden().toggleStyle(.switch).controlSize(.small) } }
     var general: some View {
         VStack(alignment: .leading, spacing: 0) {
+            UpdateCheckView(english: model.t("zh", "en") == "en").padding(.bottom, 22)
             title("常规", "General")
             row("快捷键", "Shortcut") {
                 HStack { Button(recording ? t("请按快捷键…", "Press shortcut…") : (model.config.shortcut.isEmpty ? t("录制快捷键", "Record shortcut") : model.config.shortcut)) { record() }; Button(t("清除", "Clear")) { model.save { $0.shortcut = "" } } }

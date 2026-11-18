@@ -1,8 +1,13 @@
 # MacUtil · Bar
 
+当前更新机制交付：**1.0.2 / build 3**。在设置的通用/基本设置中点击“检查更新”，联网读取公开版本信息后打开 GitHub 发布页，下载 PKG 手动安装。无后台检查、自动安装或遥测。首次需要手动安装此版本。
+
+公开下载：[ MacUtilBar 1.0.2 ](https://github.com/PanggNOTlovebean/MacUtils-Releases/releases/tag/MacUtilBar-v1.0.2)（universal，ad-hoc 开发包，未公证）。源码仓库可见性保持不变。验证与后续发布流程见 [更新机制交付记录](docs/validation/manual-updates-2026-11-18.md)。
+
+
 原生 macOS 菜单栏图标管理应用。macOS 14+，支持 Apple Silicon 和 Intel，无第三方运行时依赖。
 
-当前交付：**1.0.1 / build 2 开发候选版**。下载见 [GitHub Releases](https://github.com/PanggNOTlovebean/MacUtilBar/releases)。PKG 安装到 `/Applications/MacUtilBar.app`。这是 ad-hoc 签名、未公证的预发布包，macOS 可能阻止直接打开；不属于 Developer ID 正式发行版。
+此前交付：**1.0.1 / build 2 开发候选版**。下载见 [GitHub Releases](https://github.com/PanggNOTlovebean/MacUtilBar/releases)。PKG 安装到 `/Applications/MacUtilBar.app`。这是 ad-hoc 签名、未公证的预发布包，macOS 可能阻止直接打开；不属于 Developer ID 正式发行版。
 
 1.0.1 加强窗口身份验证、未确认状态提示和诊断证据，修正系统指示器保持可见时错误回滚折叠的问题。见 [最新验证记录](docs/validation/1.0.1-validation.md)。
 

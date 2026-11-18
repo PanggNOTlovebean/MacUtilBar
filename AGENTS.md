@@ -22,3 +22,8 @@
 - Run `swift test`, `./Scripts/build.sh build/candidate`, `codesign --verify --deep --strict`. Ad-hoc builds are development candidates only.
 - Menu bar behavior differs per macOS version: the hiding self-test and AX item identification must be checked on the host's real macOS 26 notch display and in the `MacUtils Screenshot Lab` VM. A successful API call is not proof that items actually moved or hid; verify real window frames.
 - After each coherent change and appropriate verification, commit only this project's work before reporting completion. Keep README status accurate, including anything still unverified.
+
+## Update delivery (2026-11-18)
+
+- User authorized implementing manual update checks across the sibling MacUtil applications and MacUtils, publishing new PKGs to a new public `PanggNOTlovebean/MacUtils-Releases` repository. This supersedes the earlier single-repository restriction for this task. Keep source visibility unchanged.
+- Use an explicit settings action to fetch public version metadata, then open the validated GitHub release page for manual PKG installation. No automatic installation, startup networking, telemetry, credentials embedded in clients, or changes to installed apps/privacy settings in this delivery.
