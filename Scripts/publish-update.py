@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Publish a verified PKG as a public development release, then prepare its feed."""
-import argparse, hashlib, json, os, plistlib, re, ssl, subprocess, urllib.error, urllib.parse, urllib.request
+import argparse, hashlib, json, os, plistlib, re, subprocess, sys, tempfile, urllib.parse
 from pathlib import Path
 
 def require(condition, message):
@@ -16,54 +16,46 @@ def credential():
     return fields["password"]
 
 
-class NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
-
-
 class GitHub:
-    def __init__(self):
-        self._token = credential()  # Kept in memory; never included in output or files.
-        certificate = "/etc/ssl/cert.pem"
-        context = ssl.create_default_context(cafile=certificate if Path(certificate).is_file() else None)
-        self._opener = urllib.request.build_opener(NoRedirect(), urllib.request.HTTPSHandler(context=context))
-
-    def request(self, path, method="GET", body=None, raw=None, download_limit=None, content_type="application/json"):
-        url = path if path.startswith("https://") else "https://api.github.com" + path
-        parsed = urllib.parse.urlparse(url)
-        require(parsed.scheme == "https" and parsed.hostname in {"api.github.com", "uploads.github.com"}
-                and parsed.username is None and parsed.password is None, "Unexpected authenticated endpoint")
-        require(method in {"GET", "POST", "PATCH"}, "Unsupported HTTP method")
-        headers = {"Authorization": "Bearer " + self._token, "User-Agent": "MacUtil-family-release",
-                   "Accept": "application/octet-stream" if download_limit is not None else "application/vnd.github+json",
-                   "X-GitHub-Api-Version": "2022-11-28"}
-        payload = raw if raw is not None else (json.dumps(body).encode() if body is not None else None)
-        if payload is not None:
-            headers["Content-Type"] = content_type
-        limit = download_limit if download_limit is not None else 8 * 1024 * 1024
-        for redirect in range(4):
-            request = urllib.request.Request(url, headers=headers, data=payload, method=method)
-            try:
-                with self._opener.open(request, timeout=120) as response:
-                    data = response.read(limit + 1)
-                require(len(data) <= limit, "GitHub response exceeds the expected size")
-                return data if download_limit is not None else json.loads(data)
-            except urllib.error.HTTPError as error:
-                if method == "GET" and download_limit is not None and error.code in {301, 302, 303, 307, 308}:
-                    location = error.headers.get("Location", "")
-                    destination = urllib.parse.urlparse(location)
-                    require(destination.scheme == "https" and destination.hostname is not None
-                            and destination.hostname.endswith(".githubusercontent.com")
-                            and destination.username is None and destination.password is None,
-                            "Unexpected asset redirect")
-                    # Never send the token to a signed asset URL, including later redirects.
-                    url, headers = location, {"User-Agent": "MacUtil-family-release"}
-                    continue
-                raise RuntimeError("GitHub HTTP " + str(error.code)) from None
-            except urllib.error.URLError:
-                raise RuntimeError("GitHub transport failed; inspect remote state before retrying mutations") from None
-        raise RuntimeError("Too many asset redirects")
-
+ def __init__(self): self.token=credential()
+ def request(self,path,method='GET',body=None,raw=None,download_limit=None,content_type='application/json'):
+  url=path if path.startswith('https://') else 'https://api.github.com'+path
+  parsed=urllib.parse.urlparse(url)
+  require(parsed.hostname in {'api.github.com','uploads.github.com'} and parsed.scheme=='https','Unexpected API host')
+  require(method in {'GET','POST','PATCH'},'Unexpected method')
+  headers={'Authorization':'Bearer '+self.token,'User-Agent':'MacUtil-family-release','Accept':'application/octet-stream' if download_limit is not None else 'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
+  data=raw if raw is not None else json.dumps(body).encode() if body is not None else None
+  if data is not None: headers['Content-Type']=content_type
+  def quote(value):
+   require('\n' not in value and '\r' not in value,'Invalid header')
+   return '"'+value.replace('\\','\\\\').replace('"','\\"')+'"'
+  for _ in range(4):
+   config='url = '+quote(url)+'\n'+''.join('header = '+quote(k+': '+v)+'\n' for k,v in headers.items())
+   with tempfile.TemporaryFile() as f:
+    args=['curl','--silent','--show-error','--include','--suppress-connect-headers','--connect-timeout','20','--max-time','120','--noproxy','*','--request',method,'--config','-']
+    if data is not None: f.write(data);f.flush();f.seek(0);args+=['--data-binary','@/dev/fd/'+str(f.fileno())]
+    p=subprocess.run(args,input=config.encode(),capture_output=True,pass_fds=(f.fileno(),))
+   if p.returncode != 0 and method == 'GET':
+    print('Read transport retry, curl code',p.returncode,file=sys.stderr);continue
+   require(p.returncode==0,'curl transport failed (code '+str(p.returncode)+'); inspect remote state before retrying mutations')
+   response=p.stdout
+   while True:
+    head,sep,payload=response.partition(b'\r\n\r\n')
+    if not sep: head,sep,payload=response.partition(b'\n\n')
+    require(bool(sep),'Invalid HTTP response')
+    lines=head.decode('iso-8859-1').splitlines();status=int(lines[0].split()[1])
+    if status==100: response=payload;continue
+    break
+   if method=='GET' and download_limit is not None and status in {301,302,303,307,308}:
+    h=dict(line.split(':',1) for line in lines[1:] if ':' in line)
+    location=next((v.strip() for k,v in h.items() if k.lower()=='location'),'');target=urllib.parse.urlparse(location)
+    require(target.scheme=='https' and target.hostname and target.hostname.endswith('.githubusercontent.com'),'Invalid redirect')
+    url=location;headers={'User-Agent':'MacUtil-family-release'};continue
+   if status in {502,503,504} and method == 'GET': continue
+   require(200<=status<300,'GitHub HTTP '+str(status))
+   require(len(payload)<=(download_limit if download_limit is not None else 8*1024*1024),'Response too large')
+   return payload if download_limit is not None else json.loads(payload)
+  raise RuntimeError('Too many redirects')
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
@@ -71,10 +63,18 @@ def main():
     parser.add_argument('package',type=Path)
     parser.add_argument('feed_directory',type=Path)
     parser.add_argument('--source-commit',required=True)
+    parser.add_argument('--resume-draft',action='store_true')
     args=parser.parse_args()
     require(bool(re.fullmatch('[0-9a-f]{40}',args.source_commit)),'Expected source commit SHA')
     info=plistlib.loads((args.bundle/'Contents/Info.plist').read_bytes())
     product=info['CFBundleExecutable']; version=info['CFBundleShortVersionString']; build=int(info['CFBundleVersion'])
+    source_root=Path(__file__).resolve().parents[1]
+    committed=plistlib.loads(subprocess.check_output(['git','show',args.source_commit+':Resources/Info.plist'],cwd=source_root))
+    require(all(committed.get(key)==info.get(key) for key in ['CFBundleExecutable','CFBundleIdentifier','CFBundleShortVersionString','CFBundleVersion']), 'Source commit and packaged version differ')
+    local_tag=subprocess.check_output(['git','rev-parse','v'+version+'^{commit}'],cwd=source_root,text=True).strip()
+    require(local_tag==args.source_commit,'Local release tag points to a different source commit')
+    remote=subprocess.check_output(['git','ls-remote','origin','refs/tags/v'+version+'^{}'],cwd=source_root,text=True).split()
+    require(bool(remote) and remote[0]==args.source_commit,'Push the matching annotated source tag before publishing')
     require(product in ['MacUtilRight','MacUtilPaste','MacUtilBar','MacUtils'],'Unknown product')
     require(bool(re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+',version)) and build>0,'Invalid version')
     require(args.package.name.startswith(product+'-'+version+'-macos-') and args.package.suffix=='.pkg','Wrong package')
@@ -87,7 +87,7 @@ def main():
     tag=product+'-v'+version
     releases=api.request(prefix+'/releases?per_page=100')
     matching=[r for r in releases if r['tag_name']==tag]
-    require(not matching,'Release already exists: inspect it before resuming; never overwrite published assets')
+    require(not matching or (args.resume_draft and len(matching)==1 and matching[0]['draft'] and args.source_commit in matching[0]['body']), 'Release exists; only explicitly resume a matching draft')
     notes=f'''Adds Settings → Software Update → Check for Updates. Checks public version metadata only when clicked, then opens this repository to download a PKG for manual installation.
 
 Version: {version} / build {build}
@@ -98,11 +98,14 @@ Development candidate: ad-hoc signed application, unsigned PKG, not notarized. N
 
 Validation: full Swift tests, release build, strict app/extension code-signature verification, extracted PKG payload comparison. Physical UI clicking and installation have not been validated for this release.
 '''
-    release=api.request(prefix+'/releases',method='POST',body={'tag_name':tag,'target_commitish':'main','name':product+' '+version,'body':notes,'draft':True,'prerelease':True})
+    release=matching[0] if matching else api.request(prefix+'/releases',method='POST',body={'tag_name':tag,'target_commitish':'main','name':product+' '+version,'body':notes,'draft':True,'prerelease':True})
     for file in [args.package,checksum]:
         raw=file.read_bytes()
         upload=release['upload_url'].split('{')[0]+'?'+urllib.parse.urlencode({'name':file.name})
-        asset=api.request(upload,method='POST',raw=raw,content_type='application/octet-stream')
+        existing=[item for item in release['assets'] if item['name']==file.name]
+        require(len(existing)<=1,'Duplicate release asset')
+        asset=existing[0] if existing else api.request(upload,method='POST',raw=raw,content_type='application/octet-stream')
+        require(asset['state']=='uploaded' and asset['size']==len(raw),'Incomplete draft asset; inspect before continuing')
         downloaded=api.request(asset['url'],download_limit=len(raw))
         require(downloaded==raw,'Uploaded asset did not round-trip: '+file.name)
     release=api.request(prefix+'/releases/'+str(release['id']),method='PATCH',body={'draft':False,'prerelease':True,'make_latest':'false'})

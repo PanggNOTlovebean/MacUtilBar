@@ -28,3 +28,7 @@
 - release 构建、主应用及内嵌扩展（如有）严格签名校验退出 0。
 - PKG 创建、解包后签名校验及 `diff -qr` 逐文件比较退出 0。
 - 日志位于 `build/update-tests-final.log`、`build/update-build.log`、`build/update-pkg.log`。
+
+## 发布传输恢复
+
+首次 urllib 上传出现传输失败；保持 release 为草稿并读取实际远端附件状态，改用已有发布流程验证过的 curl 传输（凭据仅由 stdin 传入，不放命令行/日志；跨域下载重定向去除凭据）。`--resume-draft` 仅恢复同产品、同版本、同源提交的草稿，已存在附件必须完整回读且逐字节一致，公开版本禁止覆盖。额外校验候选 plist、源提交 plist、本地与远端 annotated tag 一致后才允许发布。
