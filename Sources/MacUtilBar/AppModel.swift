@@ -23,7 +23,17 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
     @Published var loginBusy = false
     @Published var loginError: String?
     @Published var axTrusted = Accessibility.trusted
-    @Published var items: [MenuBarItem] = []
+    /// What the settings list and search show. Republished only when an icon appears,
+    /// disappears, is renamed or changes section/order — not when a live icon's width changes.
+    @Published var layout: [BarSection: [MenuBarItem]] = [.visible: [], .hidden: [], .alwaysHidden: []]
+    /// Always-fresh scan results for moves and presses (not published).
+    var liveItems: [MenuBarItem] = []
+    /// Diagnostic only: populate the icon list from window-server frames without Accessibility.
+    let demoItems = CommandLine.arguments.contains("--demo-items")
+    var accessibilityTrusted: Bool { demoItems || Accessibility.trusted }
+    /// Diagnostic only: log every published change and status item write.
+    let traceUpdates = CommandLine.arguments.contains("--trace-updates")
+    private var iconKey = ""
     @Published var itemsLoaded = false
     @Published var moving: String?
     @Published var moveErrors: [String: String] = [:]
@@ -64,8 +74,7 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
         return Dividers(main: quartzRect(m), spacer: quartzRect(s), permanent: quartzRect(p))
     }
     var grouped: [BarSection: [MenuBarItem]] {
-        guard let dividers else { return [.visible: items, .hidden: [], .alwaysHidden: []] }
-        return ItemLayout.grouped(items, dividers: dividers)
+        layout
     }
     /// Counts per section: identified icons when Accessibility is on, else window samples.
     var sectionCounts: [BarSection: Int]? {
@@ -74,6 +83,13 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
         return [.alwaysHidden: counts[0], .hidden: counts[1], .visible: counts[2]]
     }
 
+    func demoRecords() -> [AXItemRecord] {
+        let own = Set([main, spacer, permanent].compactMap { $0.flatMap(frames.id) })
+        return barWindows().filter { !own.contains($0.id) && $0.frame.width < 300 }.enumerated().map { index, window in
+            AXItemRecord(item: MenuBarItem(id: "demo#\(window.id)", bundleID: "local.demo.\(index)", appName: "Demo \(window.id)", label: "", pid: 1, frame: window.frame),
+                         element: AXUIElementCreateApplication(0))
+        }
+    }
     override init() {
         file = ConfigurationFile(url: URL(fileURLWithPath: ProcessInfo.processInfo.environment["MACUTILBAR_CONFIG"] ?? NSHomeDirectory() + "/.config/macutilbar/config.toml"))
         super.init()
@@ -194,47 +210,62 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
         expandedWindows = barWindows(onScreen: true).filter { !own.contains($0.id) && $0.frame.maxX <= edge + 1 && screenRect.intersects($0.frame) }
     }
     func refresh() {
-        guard let mf = frames.frame(main), let pf = frames.frame(permanent), let sf = frames.frame(spacer) else { geometryUnavailable = ready; updateIcon(); return }
-        guard NSScreen.screens.contains(where: { $0.frame.contains(mf) }) else { geometryUnavailable = ready; updateIcon(); return }
-        geometryUnavailable = false
-        orderBroken = !Geometry.ordered(main: mf, spacer: sf, permanent: pf)
+        guard let mf = frames.frame(main), let pf = frames.frame(permanent), let sf = frames.frame(spacer) else { set(\.geometryUnavailable, ready); updateIcon(); return }
+        guard NSScreen.screens.contains(where: { $0.frame.contains(mf) }) else { set(\.geometryUnavailable, ready); updateIcon(); return }
+        set(\.geometryUnavailable, false)
+        set(\.orderBroken, !Geometry.ordered(main: mf, spacer: sf, permanent: pf))
         if state == .all {
             let own = Set([main, spacer, permanent].compactMap { frames.id($0!) })
             // Counts are sampled only while all sections are expanded.
             let screen = mainScreen ?? NSScreen.main!
             let sampled = barWindows(onScreen: true).filter { !own.contains($0.id) && quartzRect(screen.frame).intersects($0.frame) }
-            hasCountSample = !sampled.isEmpty
+            set(\.hasCountSample, !sampled.isEmpty)
             let edges = (spacer: quartzRect(sf).minX, permanent: quartzRect(pf).minX)
-            counts = [BarSection.alwaysHidden, .hidden, .visible].map { section in sampled.filter { Geometry.section(x: $0.frame.midX, spacer: edges.spacer, permanent: edges.permanent) == section }.count }
+            set(\.counts, [BarSection.alwaysHidden, .hidden, .visible].map { section in sampled.filter { Geometry.section(x: $0.frame.midX, spacer: edges.spacer, permanent: edges.permanent) == section }.count })
         }
         if state != .collapsed, let screen = mainScreen, let right = screen.auxiliaryTopRightArea, let left = screen.auxiliaryTopLeftArea {
             let notch = CGRect(x: left.maxX, y: screen.frame.maxY - screen.safeAreaInsets.top, width: right.minX - left.maxX, height: screen.safeAreaInsets.top)
-            notchCount = Geometry.obscured(barWindows(onScreen: true), screen: quartzRect(screen.frame), notch: quartzRect(notch)).count
-        } else { notchCount = 0 }
+            set(\.notchCount, Geometry.obscured(barWindows(onScreen: true), screen: quartzRect(screen.frame), notch: quartzRect(notch)).count)
+        } else { set(\.notchCount, 0) }
         updateIcon()
     }
+    /// Assigns a published value only when it changes; an unconditional assignment
+    /// re-renders the whole settings window on every one-second tick.
+    func set<T: Equatable>(_ path: ReferenceWritableKeyPath<AppModel, T>, _ value: T) {
+        if self[keyPath: path] != value { self[keyPath: path] = value }
+    }
+    /// Touches the status items only when something visible changed. Re-setting the image or
+    /// title every tick makes macOS 26 re-render the item, which shows as menu bar flicker.
     func updateIcon() {
-        main?.button?.image = barIcon(expanded: state != .collapsed, badge: config.notchBadge && notchCount > 0, failed: hidingUnavailable)
+        guard let main, let permanent else { return }
+        let expanded = state != .collapsed, badge = config.notchBadge && notchCount > 0
         let hidden = (sectionCounts?[.hidden] ?? 0) + (state == .all ? 0 : sectionCounts?[.alwaysHidden] ?? 0)
-        main?.button?.setAccessibilityLabel(t("MacUtil Bar，", "MacUtil Bar, ") + (state == .collapsed ? t("已收起 \(hidden) 个图标，按下以展开", "\(hidden) icons collapsed, press to reveal") : t("已展开，按下以收起", "expanded, press to collapse")))
-        permanent?.button?.title = config.divider == "line" ? "│" : config.divider == "dot" ? "•" : "‹‹"
-        permanent?.button?.appearsDisabled = true
+        let label = t("MacUtil Bar，", "MacUtil Bar, ") + (state == .collapsed ? t("已收起 \(hidden) 个图标，按下以展开", "\(hidden) icons collapsed, press to reveal") : t("已展开，按下以收起", "expanded, press to collapse"))
+        let title = config.divider == "line" ? "│" : config.divider == "dot" ? "•" : "‹‹"
+        let key = "\(expanded)|\(badge)|\(hidingUnavailable)|\(title)|\(label)"
+        guard key != iconKey || main.button?.image == nil else { return }
+        iconKey = key
+        if traceUpdates { print("trace status-item write", key) }
+        main.button?.image = barIcon(expanded: expanded, badge: badge, failed: hidingUnavailable)
+        main.button?.setAccessibilityLabel(label)
+        if permanent.button?.title != title { permanent.button?.title = title }
+        if permanent.button?.appearsDisabled != true { permanent.button?.appearsDisabled = true }
     }
     func tick() {
         ticks += 1
         reload(); refresh()
         if settings?.isVisible == true || search.isVisible {
-            let trusted = Accessibility.trusted
-            if trusted != axTrusted { axTrusted = trusted; if trusted { scanItems() } else { items = []; records = [:]; itemsLoaded = false } }
-            if ticks % 5 == 0 { refreshLogin(); spacing = SystemSpacing.current }
+            let trusted = accessibilityTrusted
+            if trusted != axTrusted { axTrusted = trusted; if trusted { scanItems() } else { liveItems = []; records = [:]; layout = [.visible: [], .hidden: [], .alwaysHidden: []]; itemsLoaded = false } }
+            if ticks % 5 == 0 { refreshLogin(); let current = SystemSpacing.current; if current != spacing { spacing = current } }
         }
         if itemConsumers > 0 && ticks % 2 == 0 && moving == nil { scanItems() }
         guard !suspended, ready, moving == nil else { return }
         if collapse.tick(delay: config.autoCollapse, paused: pointerInBar() || menuOpen || menusVisible() || search.isVisible, expanded: state != .collapsed) { setState(.collapsed) }
     }
     func reload() {
-        do { let next = try file.read(); error = ""; if next != config { config = next; if main != nil { applyConfig() } } }
-        catch { self.error = error.localizedDescription }
+        do { let next = try file.read(); set(\.error, ""); if next != config { config = next; if main != nil { applyConfig() } } }
+        catch { set(\.error, error.localizedDescription) }
     }
     func save(_ change: (inout Configuration) -> Void) {
         var next = config; change(&next)
@@ -251,12 +282,14 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
 
     // MARK: Login item — changed only from the explicit settings switch.
     func refreshLogin() {
+        let next: LoginState
         switch SMAppService.mainApp.status {
-        case .enabled: loginState = .on
-        case .requiresApproval: loginState = .needsApproval
-        case .notRegistered: loginState = .off
-        default: loginState = .unavailable
+        case .enabled: next = .on
+        case .requiresApproval: next = .needsApproval
+        case .notRegistered: next = .off
+        default: next = .unavailable
         }
+        set(\.loginState, next)
     }
     func setLogin(_ enabled: Bool) {
         guard !loginBusy else { return }
@@ -275,12 +308,17 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
     // MARK: Icons (Accessibility)
     func scanItems(completion: (() -> Void)? = nil) {
         guard axTrusted else { completion?(); return }
-        identifier.scan { [weak self] found in
+        let scan: (@escaping ([AXItemRecord]) -> Void) -> Void = demoItems ? { [weak self] done in DispatchQueue.main.async { done(self?.demoRecords() ?? []) } } : identifier.scan
+        scan { [weak self] found in
             guard let self else { return }
             self.records = Dictionary(found.map { ($0.item.id, $0) }, uniquingKeysWith: { first, _ in first })
-            let next = found.map(\.item)
-            if next != self.items { self.items = next }
-            self.itemsLoaded = true
+            self.liveItems = found.map(\.item)
+            let next = self.dividers.map { ItemLayout.grouped(self.liveItems, dividers: $0) } ?? [.visible: self.liveItems, .hidden: [], .alwaysHidden: []]
+            func signature(_ groups: [BarSection: [MenuBarItem]]) -> [String] {
+                BarSection.allCases.flatMap { section in (groups[section] ?? []).map { "\(section.rawValue)|\($0.id)|\($0.displayName)|\($0.detail)|\($0.pid)" } }
+            }
+            if signature(next) != signature(self.layout) { self.layout = next }
+            if !self.itemsLoaded { self.itemsLoaded = true }
             completion?()
         }
     }
@@ -295,12 +333,12 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
     func move(_ id: String, by offset: Int) {
         var expected: String?
         perform(id, attempt: 0, restore: state) { item, dividers in
-            let row = ItemLayout.grouped(self.items, dividers: dividers)[dividers.section(of: item.frame)] ?? []
+            let row = ItemLayout.grouped(self.liveItems, dividers: dividers)[dividers.section(of: item.frame)] ?? []
             guard let index = row.firstIndex(where: { $0.id == id }), row.indices.contains(index + offset) else { return nil }
             expected = row[index + offset].id
             return ItemLayout.target(adjacentTo: row[index + offset].frame, before: offset < 0)
         } verify: { item, dividers in
-            guard let expected, let neighbour = self.items.first(where: { $0.id == expected }) else { return false }
+            guard let expected, let neighbour = self.liveItems.first(where: { $0.id == expected }) else { return false }
             return offset < 0 ? item.frame.maxX <= neighbour.frame.minX + 1 : item.frame.minX >= neighbour.frame.maxX - 1
         }
     }
@@ -326,7 +364,7 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
         setState(.all)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             self.scanItems {
-                guard let item = self.items.first(where: { $0.id == id }), let dividers = self.dividers else {
+                guard let item = self.liveItems.first(where: { $0.id == id }), let dividers = self.dividers else {
                     return finish(self.t("找不到这个图标，可能已被它的 App 移除。", "This icon is gone; its app may have removed it."))
                 }
                 guard let point = target(item, dividers) else { return finish(nil) }
@@ -336,7 +374,7 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
                 ItemMover.drag(from: CGPoint(x: item.frame.midX, y: item.frame.midY), to: point) {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         self.scanItems {
-                            guard let moved = self.items.first(where: { $0.id == id }), let dividers = self.dividers else { return finish(self.t("移动后找不到图标。", "The icon could not be found after moving.")) }
+                            guard let moved = self.liveItems.first(where: { $0.id == id }), let dividers = self.dividers else { return finish(self.t("移动后找不到图标。", "The icon could not be found after moving.")) }
                             if verify(moved, dividers) { return finish(nil) }
                             if number < 2 { self.runAttempt(id, number: number + 1, target: target, verify: verify, finish: finish) }
                             else { finish(self.t("移动未生效，请重试或手动 ⌘ 拖动。", "The move did not take effect. Retry or ⌘-drag it manually.")) }
@@ -454,7 +492,7 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
             window.center(); window.setFrameAutosaveName("MacUtilBar.Settings")
             settings = window
         }
-        axTrusted = Accessibility.trusted; refreshLogin(); spacing = SystemSpacing.current
+        set(\.axTrusted, accessibilityTrusted); refreshLogin(); set(\.spacing, SystemSpacing.current)
         NSApp.activate(ignoringOtherApps: true); settings?.makeKeyAndOrderFront(nil)
     }
     func windowWillClose(_ notification: Notification) {

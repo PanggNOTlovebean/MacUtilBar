@@ -126,8 +126,17 @@ struct RowIconButton: View {
 struct AppIconImage: View {
     let pid: Int32
     let fallback: String
+    /// One NSImage per process; creating a new one on each redraw makes list icons blink.
+    private static var cache: [Int32: NSImage] = [:]
+    static func icon(for pid: Int32) -> NSImage? {
+        if let cached = cache[pid] { return cached }
+        guard let icon = NSRunningApplication(processIdentifier: pid)?.icon else { return nil }
+        if cache.count > 200 { cache.removeAll() }
+        cache[pid] = icon
+        return icon
+    }
     var body: some View {
-        if let icon = NSRunningApplication(processIdentifier: pid)?.icon {
+        if let icon = Self.icon(for: pid) {
             Image(nsImage: icon).resizable().interpolation(.high).scaledToFit()
         } else {
             SettingsIconTile(symbol: fallback, color: .gray)

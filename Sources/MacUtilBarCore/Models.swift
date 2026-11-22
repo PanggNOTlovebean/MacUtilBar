@@ -2,8 +2,8 @@ import Foundation
 import CoreGraphics
 
 public enum Version {
-    public static let current = "1.1.1"
-    public static let build = "5"
+    public static let current = "1.1.2"
+    public static let build = "6"
 }
 /// Whether launching should bring up Settings. A manual launch (Finder, Spotlight, Launchpad)
 /// shows it; a login-item launch, a URL launch (`launchIsDefault` false) or a background/diagnostic run does not.

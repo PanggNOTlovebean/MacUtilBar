@@ -1,13 +1,16 @@
 import AppKit
 import Carbon
+import Combine
 import MacUtilBarCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
+    var traceToken: AnyCancellable?
     func applicationDidFinishLaunching(_ notification: Notification) {
         let others = NSRunningApplication.runningApplications(withBundleIdentifier: "local.macutilbar.app").filter { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
         if !others.isEmpty { NSApp.terminate(nil); return }
         NSApp.setActivationPolicy(.accessory)
+        if model.traceUpdates { setlinebuf(stdout); traceToken = model.objectWillChange.sink { print("trace objectWillChange") } }
         model.start { [self] in
         if let index = CommandLine.arguments.firstIndex(of: "--diagnose"), CommandLine.arguments.count > index + 1 { model.diagnose(to: CommandLine.arguments[index + 1]) }
         }

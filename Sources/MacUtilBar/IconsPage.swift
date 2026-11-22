@@ -107,9 +107,7 @@ struct ItemRow: View {
                 AppIconImage(pid: item.pid, fallback: "app.dashed")
             } controls: {
                 if model.moving == item.id { ProgressView().controlSize(.small) }
-                Picker(model.t("分区", "Section"), selection: Binding(get: { section }, set: { model.move(item.id, to: $0) })) {
-                    ForEach(BarSection.allCases) { Text($0.title(model)).tag($0) }
-                }.pickerStyle(.segmented).labelsHidden().fixedSize().controlSize(.small)
+                SectionSwitch(model: model, selection: section) { model.move(item.id, to: $0) }
                 RowIconButton(symbol: "arrow.up", label: model.t("向左移动", "Move left")) { model.move(item.id, by: -1) }.disabled(!canMoveUp || busy)
                 RowIconButton(symbol: "arrow.down", label: model.t("向右移动", "Move right")) { model.move(item.id, by: 1) }.disabled(!canMoveDown || busy)
             }
@@ -171,5 +169,33 @@ struct SectionStrip: View {
             .overlay(RoundedRectangle(cornerRadius: 5).stroke(SettingsTokens.border, lineWidth: 0.5))
             .foregroundStyle(.secondary)
         }.frame(width: 28)
+    }
+}
+
+/// Three-way section switch for list rows. A native segmented Picker inside a List
+/// (NSTableView) cell causes SwiftUI layout cycles, which show as rows flashing.
+struct SectionSwitch: View {
+    @ObservedObject var model: AppModel
+    let selection: BarSection
+    let choose: (BarSection) -> Void
+    @Environment(\.isEnabled) private var enabled
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(BarSection.allCases) { section in
+                let selected = section == selection
+                Button { if !selected { choose(section) } } label: {
+                    Text(section.title(model)).font(.system(size: 11, weight: selected ? .semibold : .regular))
+                        .lineLimit(1).padding(.horizontal, 8).frame(height: 20)
+                        .foregroundStyle(selected ? Color.accentColor : .secondary)
+                        .background(selected ? Color.accentColor.opacity(0.15) : .clear, in: RoundedRectangle(cornerRadius: 5))
+                        .contentShape(Rectangle())
+                }.buttonStyle(.plain)
+                .accessibilityLabel(section.title(model)).accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+        .padding(2)
+        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 7))
+        .opacity(enabled ? 1 : 0.5)
+        .accessibilityElement(children: .contain).accessibilityLabel(model.t("分区", "Section"))
     }
 }
