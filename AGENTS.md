@@ -9,6 +9,7 @@
 ## UI reference
 
 - User correction (2026-11-15): do **not** reference the current MacUtils (`/Users/pangg/mactool`) UI. Follow MacUtil · Paste (approved 1.6 basic-settings shell, 1.8.0 quiet-native lists/picker, 1.7.1 explicit ↑ ↓ ✎ row controls) and MacUtil · Right (`SettingsTokens` list rows with 22pt icon tiles, family menu-bar template icon rules). `docs/ui-spec.md` §0 records the specifics; the canvas in `docs/design/1.0.0/` illustrates them.
+- User direction (2026-11-22): the settings UI was rebuilt to follow MacUtil · Right (`NavigationSplitView` sidebar with icon tiles, grouped forms, list rows). `docs/ui-spec.md` §11 is now authoritative for the settings window.
 
 ## Identity and privacy
 

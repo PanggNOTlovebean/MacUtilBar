@@ -16,7 +16,7 @@ codesign --force --sign "${MACUTILBAR_SIGN_IDENTITY:--}" --options runtime "$app
 codesign --verify --deep --strict "$app"
 mkdir -p "$out/payload/Applications"
 ditto "$app" "$out/payload/Applications/MacUtilBar.app"
-xattr -cr "$out/payload"
+/usr/bin/xattr -cr "$out/payload"
 pkgbuild --analyze --root "$out/payload" "$out/components.plist"
 /usr/libexec/PlistBuddy -c 'Set :0:BundleIsRelocatable false' "$out/components.plist"
 pkgbuild --root "$out/payload" --component-plist "$out/components.plist" --install-location / --identifier local.macutilbar.app --version "$version" "$out/MacUtilBar-${version}.pkg"

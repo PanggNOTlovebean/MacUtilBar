@@ -17,7 +17,7 @@ import MacUtilBarCore
     private let fetch: (URL) async throws -> Data
 
     init(product: String = "MacUtilBar", bundleIdentifier: String = "local.macutilbar.app",
-         currentVersion: String = "1.0.2", currentBuild: Int = 3,
+         currentVersion: String = Version.current, currentBuild: Int = Int(Version.build) ?? 0,
          system: OperatingSystemVersion = ProcessInfo.processInfo.operatingSystemVersion,
          fetch: @escaping (URL) async throws -> Data = UpdateChecker.download) {
         self.product = product; self.bundleIdentifier = bundleIdentifier
@@ -69,7 +69,7 @@ struct UpdateCheckView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(t("软件更新", "Software Update")).font(.headline)
+                Text(t("软件更新", "Software Update")).font(.system(size: 13, weight: .medium))
                 Spacer()
                 Text("v\(checker.currentVersion) (\(checker.currentBuild))").font(.caption).foregroundStyle(.secondary)
                 Button(t("检查更新…", "Check for Updates…")) { Task { await checker.check() } }

@@ -32,26 +32,8 @@ extension AppModel {
                         let url = URL(fileURLWithPath: directory)
                         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
                         if let data = try? JSONSerialization.data(withJSONObject: samples, options: [.prettyPrinted, .sortedKeys]) { try? data.write(to: url.appendingPathComponent("host-frames.json")) }
-                        self.openSettings()
-                        self.refresh()
-                        self.timer?.invalidate()
-                        for language in ["zh-Hans", "en"] {
-                            self.config.language = language
-                            for tab in [0, 1] {
-                                for appearance in [NSAppearance.Name.aqua, .darkAqua] {
-                                    self.settings?.appearance = NSAppearance(named: appearance)
-                                    self.settings?.contentView = NSHostingView(rootView: SettingsView(model: self, initialTab: tab))
-                                    self.settings?.setContentSize(NSSize(width: 620, height: 520))
-                                    if let view = self.settings?.contentView {
-                                        view.layoutSubtreeIfNeeded(); view.displayIfNeeded()
-                                        if let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) {
-                                            view.cacheDisplay(in: view.bounds, to: bitmap)
-                                            try? bitmap.representation(using: .png, properties: [:])?.write(to: url.appendingPathComponent("settings-\(language)-\(tab)-\(appearance.rawValue).png"))
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        // Settings screenshots are captured from the real window (screencapture -l);
+                        // offscreen caching cannot render the split view's materials.
                         NSStatusBar.system.removeStatusItem(probe); NSApp.terminate(nil)
                     }
                 }

@@ -8,6 +8,7 @@ public struct Configuration: Equatable {
     public var hoverDelay = 300
     public var scroll = true
     public var shortcut = "ctrl+option+b"
+    public var searchShortcut = ""
     public var autoCollapse = 10
     public var collapseOnSwitch = false
     public var divider = "chevron"
@@ -49,6 +50,7 @@ public struct Configuration: Equatable {
             case "reveal.hover_delay_ms": hoverDelay = try number(100...3000)
             case "reveal.scroll": scroll = try bool()
             case "reveal.toggle_shortcut": shortcut = try str()
+            case "reveal.search_shortcut": searchShortcut = try str()
             case "reveal.auto_collapse_seconds": autoCollapse = try number(0...3600)
             case "reveal.collapse_on_app_switch": collapseOnSwitch = try bool()
             case "appearance_items.divider_style": divider = try str()
@@ -56,11 +58,11 @@ public struct Configuration: Equatable {
             default: throw Invalid.value(key)
             }
         }
-        guard ["system", "zh-Hans", "en"].contains(language), ["system", "light", "dark"].contains(appearance), ["chevron", "line", "dot"].contains(divider), Shortcut.parse(shortcut) != nil || shortcut.isEmpty else { throw Invalid.value("unsupported value") }
+        guard ["system", "zh-Hans", "en"].contains(language), ["system", "light", "dark"].contains(appearance), ["chevron", "line", "dot"].contains(divider), [shortcut, searchShortcut].allSatisfy({ Shortcut.parse($0) != nil || $0.isEmpty }) else { throw Invalid.value("unsupported value") }
     }
     public var toml: String {
         """
-        # MacUtil Bar 1.0 — supported TOML subset; unknown keys are rejected.
+        # MacUtil Bar — supported TOML subset; unknown keys are rejected.
         [core]
         language = "\(language)"
         appearance = "\(appearance)"
@@ -72,6 +74,7 @@ public struct Configuration: Equatable {
         hover_delay_ms = \(hoverDelay)
         scroll = \(scroll)
         toggle_shortcut = "\(shortcut)"
+        search_shortcut = "\(searchShortcut)"
         auto_collapse_seconds = \(autoCollapse)
         collapse_on_app_switch = \(collapseOnSwitch)
 
@@ -89,6 +92,12 @@ public enum Shortcut {
         let mods = Set(parts.dropLast())
         guard mods.count == parts.count - 1, !mods.isEmpty, mods.isSubset(of: ["ctrl", "option", "shift", "cmd"]) else { return nil }
         return (key, mods)
+    }
+    /// Menu-style symbols in the system order ⌃⌥⇧⌘, e.g. "ctrl+option+b" → "⌃⌥B".
+    public static func display(_ value: String) -> String {
+        guard let parsed = parse(value) else { return "" }
+        let symbols = [("ctrl", "⌃"), ("option", "⌥"), ("shift", "⇧"), ("cmd", "⌘")]
+        return symbols.filter { parsed.modifiers.contains($0.0) }.map(\.1).joined() + parsed.key.uppercased()
     }
 }
 /// Compare the last read bytes before writing, so external edits are never silently overwritten.
