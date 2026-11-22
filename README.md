@@ -1,12 +1,12 @@
 # MacUtil · Bar
 
-当前开发候选：**1.1.0 / build 4**（未发布）。设置界面按 MacUtil · Right 重构为侧边栏布局；新增辅助功能图标识别、在设置里移动图标、搜索面板和图标间距。见 [1.1.0 验证记录](docs/validation/1.1.0-validation.md)。
+当前发布：**1.1.0 / build 4**（2026-11-22，[下载 PKG](https://github.com/PanggNOTlovebean/MacUtils-Releases/releases/tag/MacUtilBar-v1.1.0)，universal，ad-hoc 开发包，未公证；已装 1.0.2 的可在设置里“检查更新”看到）。设置界面按 MacUtil · Right 重构为侧边栏布局；新增辅助功能图标识别、在设置里移动图标、搜索面板和图标间距。见 [1.1.0 验证记录](docs/validation/1.1.0-validation.md)。
 
 **已知阻断：** 在当前宿主上，macOS 不显示 Bundle ID 为 `local.macutilbar.app` 的任何菜单栏图标（同一程序换 ID 即正常，折叠实测通过）。请在 系统设置 › 菜单栏 › “允许在菜单栏中显示” 中打开 MacUtil Bar（已打开则关闭后再打开），再在设置里点“重新检查”。图标不可见时，再次打开 App 会直接进入设置。
 
 **辅助功能相关功能（识别、移动、搜索）只有逻辑单元测试，尚未在授权后的真机上验证。** 隐藏条、条件规则、期望布局自动恢复未实现。
 
-上一发布：**1.0.2 / build 3**。在设置的通用/基本设置中点击“检查更新”，联网读取公开版本信息后打开 GitHub 发布页，下载 PKG 手动安装。无后台检查、自动安装或遥测。首次需要手动安装此版本。
+1.0.2 / build 3 起提供手动更新检查：在设置的通用/基本设置中点击“检查更新”，联网读取公开版本信息后打开 GitHub 发布页，下载 PKG 手动安装。无后台检查、自动安装或遥测。首次需要手动安装此版本。
 
 公开下载：[ MacUtilBar 1.0.2 ](https://github.com/PanggNOTlovebean/MacUtils-Releases/releases/tag/MacUtilBar-v1.0.2)（universal，ad-hoc 开发包，未公证）。源码仓库可见性保持不变。验证与后续发布流程见 [更新机制交付记录](docs/validation/manual-updates-2026-11-18.md)。
 
