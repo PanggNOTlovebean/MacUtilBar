@@ -216,12 +216,15 @@ struct GeneralPage: View {
 enum SMAppServiceOpener { static func open() { SMAppService.openSystemSettingsLoginItems() } }
 
 // MARK: Shortcut recorder
+/// Records one shortcut at a time. Uses the physical key code (matching the Carbon registration,
+/// so non-US layouts register the key that was pressed); stops on Escape or when focus leaves.
 struct ShortcutField: View {
     @ObservedObject var model: AppModel
     let path: WritableKeyPath<Configuration, String>
     let slot: HotKeys.Slot
-    @State private var recording = false
     @State private var monitor: Any?
+    @State private var observers: [NSObjectProtocol] = []
+    private var recording: Bool { model.recordingSlot == slot }
     var body: some View {
         let value = model.config[keyPath: path]
         HStack(spacing: 4) {
@@ -236,25 +239,40 @@ struct ShortcutField: View {
             if !value.isEmpty && !recording {
                 RowIconButton(symbol: "xmark.circle.fill", label: model.t("清除", "Clear")) { model.save { $0[keyPath: path] = "" } }
             }
-        }.onDisappear { stop() }
+        }
+        .onDisappear { stop() }
+        // Another field started recording: drop this one's monitor.
+        .onChange(of: model.recordingSlot) { _, current in if current != slot { teardown() } }
     }
     private func start() {
-        stop(); recording = true
+        model.recordingSlot = slot          // ends any other field's recording
+        teardown()
         model.hotkeys.suspend()
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            guard model.recordingSlot == slot else { return event }
             if event.keyCode == 53 { stop(); return nil }
-            guard let key = event.charactersIgnoringModifiers?.lowercased(), key.count == 1 else { return nil }
+            guard let key = HotKeys.keyCodes.first(where: { $0.value == UInt32(event.keyCode) })?.key else { NSSound.beep(); return nil }
             var parts: [String] = []
             for (flag, name) in [(NSEvent.ModifierFlags.control, "ctrl"), (.option, "option"), (.shift, "shift"), (.command, "cmd")] where event.modifierFlags.contains(flag) { parts.append(name) }
             let value = (parts + [key]).joined(separator: "+")
-            if Shortcut.parse(value) != nil, HotKeys.keyCodes[key] != nil { model.save { $0[keyPath: path] = value }; stop() }
+            if Shortcut.parse(value) != nil { stop(); model.save { $0[keyPath: path] = value } }
             else { NSSound.beep() }
             return nil
         }
+        let center = NotificationCenter.default
+        for name in [NSApplication.didResignActiveNotification, NSWindow.didResignKeyNotification] {
+            observers.append(center.addObserver(forName: name, object: nil, queue: .main) { _ in stop() })
+        }
     }
-    private func stop() {
+    private func teardown() {
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
-        if recording { recording = false; model.applyConfig() }
+        observers.forEach(NotificationCenter.default.removeObserver); observers = []
+    }
+    private func stop() {
+        teardown()
+        guard model.recordingSlot == slot else { return }
+        model.recordingSlot = nil
+        model.applyConfig()                 // re-register both hotkeys
     }
 }

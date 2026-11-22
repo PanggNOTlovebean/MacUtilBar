@@ -113,7 +113,7 @@ struct ItemRow: View {
                 RowIconButton(symbol: "arrow.up", label: model.t("向左移动", "Move left")) { model.move(item.id, by: -1) }.disabled(!canMoveUp || busy)
                 RowIconButton(symbol: "arrow.down", label: model.t("向右移动", "Move right")) { model.move(item.id, by: 1) }.disabled(!canMoveDown || busy)
             }
-            .disabled(busy && model.moving != item.id)
+            .disabled(busy || !model.canMove)
             .contextMenu { Button(model.t("打开它的菜单", "Open Its Menu")) { model.press(item.id) } }
             if let error = model.moveErrors[item.id] {
                 HStack(spacing: 6) {

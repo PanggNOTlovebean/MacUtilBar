@@ -62,12 +62,17 @@ public struct MenuBarItem: Equatable, Identifiable, Sendable {
     public init(id: String, bundleID: String, appName: String, label: String, pid: Int32, frame: CGRect) {
         self.id = id; self.bundleID = bundleID; self.appName = appName; self.label = label; self.pid = pid; self.frame = frame
     }
-    /// Stable identity: bundle ID plus the most specific AX attribute, else the index within the app.
-    public static func identity(bundleID: String, identifier: String?, description: String?, title: String?, index: Int) -> String {
-        for (kind, value) in [("id", identifier), ("desc", description), ("title", title)] {
+    /// Stable identity: bundle ID plus AXIdentifier or AXDescription, else the index within the app.
+    /// AXTitle is deliberately excluded: live-text items (meters, timers) change it constantly.
+    public static func identity(bundleID: String, identifier: String?, description: String?, index: Int) -> String {
+        for (kind, value) in [("id", identifier), ("desc", description)] {
             if let value, !value.trimmingCharacters(in: .whitespaces).isEmpty { return "\(bundleID)#\(kind)=\(value)" }
         }
         return "\(bundleID)#\(index)"
+    }
+    /// Second and later items sharing an identity within one app get a numeric suffix, keeping IDs unique.
+    public static func disambiguated(_ identity: String, occurrence: Int) -> String {
+        occurrence <= 1 ? identity : "\(identity)~\(occurrence)"
     }
     /// Human-readable name: the app name, with the AX label when it adds information.
     public var displayName: String { appName.isEmpty ? (label.isEmpty ? bundleID : label) : appName }

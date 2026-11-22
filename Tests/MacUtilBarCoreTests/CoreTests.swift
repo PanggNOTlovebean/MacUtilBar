@@ -111,11 +111,13 @@ final class ItemLayoutTests: XCTestCase {
         XCTAssertLessThan(ItemLayout.target(adjacentTo: neighbour, before: true).x, neighbour.midX)
         XCTAssertGreaterThan(ItemLayout.target(adjacentTo: neighbour, before: false).x, neighbour.midX)
     }
-    func testIdentityPrefersMostSpecificAttribute() {
-        XCTAssertEqual(MenuBarItem.identity(bundleID: "a", identifier: "status", description: "Desc", title: nil, index: 3), "a#id=status")
-        XCTAssertEqual(MenuBarItem.identity(bundleID: "a", identifier: " ", description: "Desc", title: "T", index: 3), "a#desc=Desc")
-        XCTAssertEqual(MenuBarItem.identity(bundleID: "a", identifier: nil, description: nil, title: "T", index: 3), "a#title=T")
-        XCTAssertEqual(MenuBarItem.identity(bundleID: "a", identifier: nil, description: nil, title: nil, index: 3), "a#3")
+    func testIdentityIgnoresLiveTitlesAndStaysUnique() {
+        XCTAssertEqual(MenuBarItem.identity(bundleID: "a", identifier: "status", description: "Desc", index: 3), "a#id=status")
+        XCTAssertEqual(MenuBarItem.identity(bundleID: "a", identifier: " ", description: "Desc", index: 3), "a#desc=Desc")
+        // A CPU meter whose title changes every second keeps the same identity.
+        XCTAssertEqual(MenuBarItem.identity(bundleID: "a", identifier: nil, description: nil, index: 3), "a#3")
+        XCTAssertEqual(MenuBarItem.disambiguated("a#desc=Clock", occurrence: 1), "a#desc=Clock")
+        XCTAssertEqual(MenuBarItem.disambiguated("a#desc=Clock", occurrence: 2), "a#desc=Clock~2")
     }
     func testFilterMatchesAllWordsAcrossFields() {
         let wifi = MenuBarItem(id: "w", bundleID: "com.apple.controlcenter", appName: "Wi‑Fi", label: "Wi‑Fi", pid: 1, frame: .zero)

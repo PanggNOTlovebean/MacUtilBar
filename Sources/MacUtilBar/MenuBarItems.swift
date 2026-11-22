@@ -23,12 +23,17 @@ struct AXItemRecord {
 /// messaging timeout, so an unresponsive app cannot stall the scan.
 final class ItemIdentifier {
     private let queue = DispatchQueue(label: "local.macutilbar.accessibility", qos: .userInitiated)
-    private var pending: [([AXItemRecord]) -> Void] = []
+    private var running: [([AXItemRecord]) -> Void]?
+    private var waiting: [([AXItemRecord]) -> Void] = []
     static let systemBundles: Set<String> = ["com.apple.controlcenter", "com.apple.systemuiserver", "com.apple.Spotlight", "com.apple.TextInputMenuAgent", "com.apple.Siri"]
 
+    /// Every caller receives a scan that *started* after its request, so a move never sees
+    /// frames captured before the bar expanded. Requests made during a scan share one follow-up scan.
     func scan(completion: @escaping ([AXItemRecord]) -> Void) {
-        pending.append(completion)
-        guard pending.count == 1 else { return }
+        if running != nil { waiting.append(completion) } else { start([completion]) }
+    }
+    private func start(_ callbacks: [([AXItemRecord]) -> Void]) {
+        running = callbacks
         let own = ProcessInfo.processInfo.processIdentifier
         let apps = NSWorkspace.shared.runningApplications
             .filter { $0.processIdentifier != own && !$0.isTerminated }
@@ -36,8 +41,10 @@ final class ItemIdentifier {
         queue.async {
             let records = apps.flatMap { Self.read(pid: $0.pid, bundle: $0.bundle, name: $0.name) }
             DispatchQueue.main.async {
-                let callbacks = self.pending; self.pending = []
-                callbacks.forEach { $0(records) }
+                let finished = self.running ?? []; self.running = nil
+                let next = self.waiting; self.waiting = []
+                if !next.isEmpty { self.start(next) }
+                finished.forEach { $0(records) }
             }
         }
     }
@@ -64,6 +71,7 @@ final class ItemIdentifier {
         guard let bar = attribute(app, "AXExtrasMenuBar"), CFGetTypeID(bar) == AXUIElementGetTypeID(),
               let children = attribute(bar as! AXUIElement, kAXChildrenAttribute) as? [AXUIElement] else { return [] }
         let system = systemBundles.contains(bundle)
+        var seen: [String: Int] = [:]
         return children.enumerated().compactMap { index, element in
             AXUIElementSetMessagingTimeout(element, 0.25)
             guard let frame = frame(of: element) else { return nil }
@@ -72,7 +80,9 @@ final class ItemIdentifier {
             let title = string(element, kAXTitleAttribute)
             let help = string(element, kAXHelpAttribute)
             let label = description ?? title ?? help ?? ""
-            let id = MenuBarItem.identity(bundleID: bundle.isEmpty ? "pid\(pid)" : bundle, identifier: identifier, description: description, title: title, index: index)
+            let base = MenuBarItem.identity(bundleID: bundle.isEmpty ? "pid\(pid)" : bundle, identifier: identifier, description: description, index: index)
+            seen[base, default: 0] += 1
+            let id = MenuBarItem.disambiguated(base, occurrence: seen[base]!)
             // System modules (Wi-Fi, Battery…) all belong to Control Center; name them by their label.
             let appName = system && !label.isEmpty ? label : name
             return AXItemRecord(item: MenuBarItem(id: id, bundleID: bundle, appName: appName, label: label, pid: pid, frame: frame), element: element)
@@ -110,14 +120,21 @@ enum ItemMover {
             DispatchQueue.main.async(execute: completion)
         }
     }
-    /// Opens an icon's menu: AXPress first (no pointer movement), else a real click at its centre.
+    private static let pressQueue = DispatchQueue(label: "local.macutilbar.press")
+    /// Opens an icon's menu: AXPress first (no pointer movement). A status item runs its menu
+    /// inside the AXPress call, so a timeout means the menu is open — only click when the
+    /// element genuinely can't be pressed. Runs off the main thread.
     static func press(_ record: AXItemRecord) {
-        if AXUIElementPerformAction(record.element, kAXPressAction as CFString) == .success { return }
-        let frame = ItemIdentifier.frame(of: record.element) ?? record.item.frame
-        let point = CGPoint(x: frame.midX, y: frame.midY)
-        let source = CGEventSource(stateID: .hidSystemState)
-        for type in [CGEventType.leftMouseDown, .leftMouseUp] {
-            CGEvent(mouseEventSource: source, mouseType: type, mouseCursorPosition: point, mouseButton: .left)?.post(tap: .cghidEventTap)
+        pressQueue.async {
+            AXUIElementSetMessagingTimeout(record.element, 0.25)
+            let result = AXUIElementPerformAction(record.element, kAXPressAction as CFString)
+            guard [.actionUnsupported, .attributeUnsupported, .invalidUIElement].contains(result) else { return }
+            let frame = ItemIdentifier.frame(of: record.element) ?? record.item.frame
+            let point = CGPoint(x: frame.midX, y: frame.midY)
+            let source = CGEventSource(stateID: .hidSystemState)
+            for type in [CGEventType.leftMouseDown, .leftMouseUp] {
+                CGEvent(mouseEventSource: source, mouseType: type, mouseCursorPosition: point, mouseButton: .left)?.post(tap: .cghidEventTap)
+            }
         }
     }
 }

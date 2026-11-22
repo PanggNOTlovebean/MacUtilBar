@@ -64,6 +64,7 @@ def main():
     parser.add_argument('feed_directory',type=Path)
     parser.add_argument('--source-commit',required=True)
     parser.add_argument('--resume-draft',action='store_true')
+    parser.add_argument('--notes-file',type=Path,help='Markdown summary of this release, placed before the provenance lines')
     args=parser.parse_args()
     require(bool(re.fullmatch('[0-9a-f]{40}',args.source_commit)),'Expected source commit SHA')
     info=plistlib.loads((args.bundle/'Contents/Info.plist').read_bytes())
@@ -88,7 +89,16 @@ def main():
     releases=api.request(prefix+'/releases?per_page=100')
     matching=[r for r in releases if r['tag_name']==tag]
     require(not matching or (args.resume_draft and len(matching)==1 and matching[0]['draft'] and args.source_commit in matching[0]['body']), 'Release exists; only explicitly resume a matching draft')
-    notes=f'''Adds Settings → Software Update → Check for Updates. Checks public version metadata only when clicked, then opens this repository to download a PKG for manual installation.
+    summary=args.notes_file.read_text().strip() if args.notes_file else None
+    require(summary is None or (0 < len(summary) <= 4000),'Release notes must be 1-4000 characters')
+    notes=f'''{summary}
+
+Version: {version} / build {build}
+Source commit: {args.source_commit}
+Package: {args.package.name}
+
+Development candidate: ad-hoc signed application, unsigned PKG, not notarized. Install manually; existing configuration and app identities are retained.
+''' if summary else f'''Adds Settings → Software Update → Check for Updates. Checks public version metadata only when clicked, then opens this repository to download a PKG for manual installation.
 
 Version: {version} / build {build}
 Source commit: {args.source_commit}

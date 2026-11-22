@@ -29,6 +29,8 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
     @Published var moveErrors: [String: String] = [:]
     @Published var page: SettingsPage = .icons
     @Published var spacing: Int? = SystemSpacing.current
+    /// The shortcut field currently recording; global hotkeys stay unregistered meanwhile.
+    @Published var recordingSlot: HotKeys.Slot?
     let file: ConfigurationFile
     var main: NSStatusItem!, spacer: NSStatusItem!, permanent: NSStatusItem!
     var settings: NSWindow?
@@ -150,6 +152,8 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
     }
     func setState(_ next: RevealState) {
         guard main != nil, ready else { return }
+        // A ⌘-drag in progress needs every icon on screen; hotkeys, clicks and URLs must not collapse mid-move.
+        guard moving == nil || next == .all else { return }
         // During full-screen menu-bar suppression AppKit exposes placeholder frames.
         // Do not infer order or mutate hiding geometry until the bar is visible again.
         if next != .all {
@@ -237,8 +241,10 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
         do { try file.write(next); config = next; error = ""; applyConfig() } catch { self.error = error.localizedDescription }
     }
     func applyConfig() {
-        shortcutFailed = !hotkeys.register(config.shortcut, for: .toggle)
-        searchShortcutFailed = !hotkeys.register(config.searchShortcut, for: .search)
+        if recordingSlot == nil {
+            shortcutFailed = !hotkeys.register(config.shortcut, for: .toggle)
+            searchShortcutFailed = !hotkeys.register(config.searchShortcut, for: .search)
+        }
         NSApp.appearance = config.appearance == "system" ? nil : NSAppearance(named: config.appearance == "dark" ? .darkAqua : .aqua)
         installMonitors(); updateIcon()
     }
@@ -298,14 +304,23 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
             return offset < 0 ? item.frame.maxX <= neighbour.frame.minX + 1 : item.frame.minX >= neighbour.frame.maxX - 1
         }
     }
+    /// Whether a new move may start now (one move at a time; needs verified, correctly ordered dividers).
+    var canMove: Bool { axTrusted && ready && !geometryUnavailable && !orderBroken && moving == nil }
     private func perform(_ id: String, attempt: Int, restore previous: RevealState, target: @escaping (MenuBarItem, Dividers) -> CGPoint?, verify: @escaping (MenuBarItem, Dividers) -> Bool) {
-        guard axTrusted, ready, !geometryUnavailable, moving == nil || moving == id else { return }
+        guard canMove else { return }
         moving = id; moveErrors[id] = nil
         let finish: (String?) -> Void = { [weak self] failure in
             guard let self else { return }
             self.moving = nil; self.moveErrors[id] = failure
             self.scanItems()
             if previous != .all && self.canApply(previous) { self.setState(previous) }
+        }
+        runAttempt(id, number: attempt, target: target, verify: verify, finish: finish)
+    }
+    /// One drag attempt; `moving` stays set across retries so nothing else can start or collapse the bar.
+    private func runAttempt(_ id: String, number: Int, target: @escaping (MenuBarItem, Dividers) -> CGPoint?, verify: @escaping (MenuBarItem, Dividers) -> Bool, finish: @escaping (String?) -> Void) {
+        guard axTrusted, ready, !geometryUnavailable, !orderBroken else {
+            return finish(t("菜单栏状态已变化，移动已取消。", "The menu bar changed, so the move was cancelled."))
         }
         // Expand everything so both the icon and the destination are on screen.
         setState(.all)
@@ -323,10 +338,8 @@ final class AppModel: NSObject, ObservableObject, NSMenuDelegate, NSWindowDelega
                         self.scanItems {
                             guard let moved = self.items.first(where: { $0.id == id }), let dividers = self.dividers else { return finish(self.t("移动后找不到图标。", "The icon could not be found after moving.")) }
                             if verify(moved, dividers) { return finish(nil) }
-                            if attempt < 2 {
-                                self.moving = nil
-                                self.perform(id, attempt: attempt + 1, restore: previous, target: target, verify: verify)
-                            } else { finish(self.t("移动未生效，请重试或手动 ⌘ 拖动。", "The move did not take effect. Retry or ⌘-drag it manually.")) }
+                            if number < 2 { self.runAttempt(id, number: number + 1, target: target, verify: verify, finish: finish) }
+                            else { finish(self.t("移动未生效，请重试或手动 ⌘ 拖动。", "The move did not take effect. Retry or ⌘-drag it manually.")) }
                         }
                     }
                 }

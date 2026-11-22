@@ -3,31 +3,36 @@ import SwiftUI
 import MacUtilBarCore
 
 private final class KeyPanel: NSPanel {
+    var onCancel: (() -> Void)?
     override var canBecomeKey: Bool { true }
-    override func cancelOperation(_ sender: Any?) { orderOut(nil) }
+    override func cancelOperation(_ sender: Any?) { onCancel?() }
 }
 
 /// Centered picker in the style of Paste 1.8.0: autofocused field, tabs, solid-blue selection, keycap hints.
 final class SearchPanelController: NSObject, NSWindowDelegate {
     private weak var model: AppModel?
-    private var panel: NSPanel?
+    private var panel: KeyPanel?
+    /// Single source of truth for the `itemConsumers` reference this panel holds.
+    private var shown = false
     init(model: AppModel) { self.model = model }
-    var isVisible: Bool { panel?.isVisible == true }
-    func toggle() { isVisible ? close() : show() }
+    var isVisible: Bool { shown }
+    func toggle() { shown ? close() : show() }
     func show() {
         guard let model else { return }
         if !model.axTrusted { model.openSettings(page: .icons); return }
+        if shown { NSApp.activate(ignoringOtherApps: true); panel?.makeKeyAndOrderFront(nil); return }
         if panel == nil {
             let panel = KeyPanel(contentRect: NSRect(x: 0, y: 0, width: 560, height: 420), styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
             panel.isOpaque = false; panel.backgroundColor = .clear; panel.hasShadow = true
             panel.level = .floating; panel.isMovableByWindowBackground = true; panel.hidesOnDeactivate = false
             panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
             panel.delegate = self
-            panel.contentView = NSHostingView(rootView: SearchView(model: model, close: { [weak self] in self?.close() }))
+            panel.onCancel = { [weak self] in self?.close() }
             self.panel = panel
-        } else if let host = panel?.contentView as? NSHostingView<SearchView> {
-            host.rootView = SearchView(model: model, close: { [weak self] in self?.close() })
         }
+        // A fresh view each time: empty query, first row selected, field focused.
+        panel?.contentView = NSHostingView(rootView: SearchView(model: model, close: { [weak self] in self?.close() }))
+        shown = true
         model.itemConsumers += 1; model.scanItems()
         let screen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main
         if let screen, let panel {
@@ -38,8 +43,9 @@ final class SearchPanelController: NSObject, NSWindowDelegate {
         panel?.makeKeyAndOrderFront(nil)
     }
     func close() {
-        guard let panel, panel.isVisible else { return }
-        panel.orderOut(nil)
+        guard shown else { return }
+        shown = false
+        panel?.orderOut(nil)
         model?.itemConsumers -= 1
     }
     func windowDidResignKey(_ notification: Notification) { close() }
