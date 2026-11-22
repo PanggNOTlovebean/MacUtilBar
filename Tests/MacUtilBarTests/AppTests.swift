@@ -22,4 +22,12 @@ final class AppTests: XCTestCase {
         XCTAssertEqual(plist["LSUIElement"] as? Bool, true)
     }
     func testTemplateIcon() { let image = barIcon(expanded: true, badge: false, failed: false); XCTAssertTrue(image.isTemplate); XCTAssertEqual(image.size.width, 18) }
+    func testLaunchShowsSettingsOnlyForManualLaunches() {
+        XCTAssertTrue(LaunchPolicy.showsSettings(arguments: ["MacUtilBar"], loginLaunch: false, defaultLaunch: true))
+        XCTAssertFalse(LaunchPolicy.showsSettings(arguments: ["MacUtilBar"], loginLaunch: true, defaultLaunch: true))
+        XCTAssertFalse(LaunchPolicy.showsSettings(arguments: ["MacUtilBar"], loginLaunch: false, defaultLaunch: false))
+        XCTAssertFalse(LaunchPolicy.showsSettings(arguments: ["MacUtilBar", "--background"], loginLaunch: false, defaultLaunch: true))
+        XCTAssertFalse(LaunchPolicy.showsSettings(arguments: ["MacUtilBar", "--diagnose", "/tmp/x"], loginLaunch: false, defaultLaunch: true))
+        XCTAssertTrue(LaunchPolicy.showsSettings(arguments: ["MacUtilBar", "--settings"], loginLaunch: true, defaultLaunch: true))
+    }
 }

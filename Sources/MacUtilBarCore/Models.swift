@@ -2,8 +2,16 @@ import Foundation
 import CoreGraphics
 
 public enum Version {
-    public static let current = "1.1.0"
-    public static let build = "4"
+    public static let current = "1.1.1"
+    public static let build = "5"
+}
+/// Whether launching should bring up Settings. A manual launch (Finder, Spotlight, Launchpad)
+/// shows it; a login-item launch, a URL launch (`launchIsDefault` false) or a background/diagnostic run does not.
+public enum LaunchPolicy {
+    public static func showsSettings(arguments: [String], loginLaunch: Bool, defaultLaunch: Bool) -> Bool {
+        if arguments.contains("--settings") || arguments.contains("--page") { return true }
+        return defaultLaunch && !loginLaunch && !arguments.contains("--background") && !arguments.contains("--diagnose")
+    }
 }
 public enum RevealState: String, Codable { case collapsed, revealed, all }
 public enum Route: String, CaseIterable {

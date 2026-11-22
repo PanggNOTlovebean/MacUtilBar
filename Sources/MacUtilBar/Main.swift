@@ -1,4 +1,5 @@
 import AppKit
+import Carbon
 import MacUtilBarCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -11,8 +12,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let index = CommandLine.arguments.firstIndex(of: "--diagnose"), CommandLine.arguments.count > index + 1 { model.diagnose(to: CommandLine.arguments[index + 1]) }
         }
         let arguments = CommandLine.arguments
+        let loginLaunch = NSAppleEventManager.shared().currentAppleEvent?.paramDescriptor(forKeyword: keyAEPropData)?.enumCodeValue == keyAELaunchedAsLogInItem
+        let defaultLaunch = (notification.userInfo?[NSApplication.launchIsDefaultUserInfoKey] as? Bool) ?? true
         if let index = arguments.firstIndex(of: "--page"), arguments.indices.contains(index + 1) { model.openSettings(page: SettingsPage(rawValue: arguments[index + 1])) }
-        else if arguments.contains("--settings") { model.openSettings() }
+        else if LaunchPolicy.showsSettings(arguments: arguments, loginLaunch: loginLaunch, defaultLaunch: defaultLaunch) { model.openSettings() }
     }
     func application(_ application: NSApplication, open urls: [URL]) { urls.forEach(model.route) }
     /// Opening the app again (Finder, Spotlight, Launchpad) shows settings — the only way in if macOS hides our icon.

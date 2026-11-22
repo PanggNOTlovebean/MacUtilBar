@@ -1,6 +1,6 @@
 # MacUtil · Bar
 
-当前发布：**1.1.0 / build 4**（2026-11-22，[下载 PKG](https://github.com/PanggNOTlovebean/MacUtils-Releases/releases/tag/MacUtilBar-v1.1.0)，universal，ad-hoc 开发包，未公证；已装 1.0.2 的可在设置里“检查更新”看到）。设置界面按 MacUtil · Right 重构为侧边栏布局；新增辅助功能图标识别、在设置里移动图标、搜索面板和图标间距。见 [1.1.0 验证记录](docs/validation/1.1.0-validation.md)。
+当前发布：**1.1.1 / build 5**（2026-11-22，[下载 PKG](https://github.com/PanggNOTlovebean/MacUtils-Releases/releases/tag/MacUtilBar-v1.1.1)，universal，ad-hoc 开发包，未公证；已装 1.0.2 的可在设置里“检查更新”看到）。设置界面按 MacUtil · Right 重构为侧边栏布局；新增辅助功能图标识别、在设置里移动图标、搜索面板和图标间距。见 [1.1.0 验证记录](docs/validation/1.1.0-validation.md)。
 
 **已知阻断：** 在当前宿主上，macOS 不显示 Bundle ID 为 `local.macutilbar.app` 的任何菜单栏图标（同一程序换 ID 即正常，折叠实测通过）。请在 系统设置 › 菜单栏 › “允许在菜单栏中显示” 中打开 MacUtil Bar（已打开则关闭后再打开），再在设置里点“重新检查”。图标不可见时，再次打开 App 会直接进入设置。
 
@@ -36,6 +36,10 @@
 配置：`~/.config/macutilbar/config.toml`；开发时可用 `MACUTILBAR_CONFIG` 指定隔离路径。支持文件生成的 TOML 子集（分组、字符串、布尔、整数和整行注释），未知字段、重复键、转义字符串及行尾注释会报错，不会覆盖原文件。
 
 URL：`macutilbar://toggle`、`show`、`hide`、`show-all`、`settings`、`search`（需辅助功能）。
+
+## 1.1.1
+
+手动打开 App（访达、Spotlight、启动台，或运行中再次打开）直接显示设置；登录时启动、`macutilbar://` 链接或 `--background` 不弹窗。
 
 ## 1.1.0 新增
 
