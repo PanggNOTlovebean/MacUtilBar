@@ -1,6 +1,6 @@
 # MacUtil · Bar
 
-当前开发候选：**1.1.2 / build 6**（修复界面闪烁，待发布）；已发布 1.1.1 / build 5（2026-11-22，[下载 PKG](https://github.com/PanggNOTlovebean/MacUtils-Releases/releases/tag/MacUtilBar-v1.1.1)，universal，ad-hoc 开发包，未公证；已装 1.0.2 的可在设置里“检查更新”看到）。设置界面按 MacUtil · Right 重构为侧边栏布局；新增辅助功能图标识别、在设置里移动图标、搜索面板和图标间距。见 [1.1.0 验证记录](docs/validation/1.1.0-validation.md)。
+当前发布：**1.1.2 / build 6**（2026-11-22，修复界面闪烁，[下载 PKG](https://github.com/PanggNOTlovebean/MacUtils-Releases/releases/tag/MacUtilBar-v1.1.2)，universal，ad-hoc 开发包，未公证；已装 1.0.2 的可在设置里“检查更新”看到）。设置界面按 MacUtil · Right 重构为侧边栏布局；新增辅助功能图标识别、在设置里移动图标、搜索面板和图标间距。见 [1.1.0 验证记录](docs/validation/1.1.0-validation.md)。
 
 **已知阻断：** 在当前宿主上，macOS 不显示 Bundle ID 为 `local.macutilbar.app` 的任何菜单栏图标（同一程序换 ID 即正常，折叠实测通过）。请在 系统设置 › 菜单栏 › “允许在菜单栏中显示” 中打开 MacUtil Bar（已打开则关闭后再打开），再在设置里点“重新检查”。图标不可见时，再次打开 App 会直接进入设置。
 
